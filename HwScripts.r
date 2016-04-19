@@ -65,10 +65,13 @@ GE$Date = as.Date(GE$Date, "%m/%d/%y")
 CocaCola$Date = as.Date(CocaCola$Date, "%m/%d/%y")
 ProcterGamble$Date = as.Date(ProcterGamble$Date, "%m/%d/%y")
 Boeing$Date = as.Date(Boeing$Date, "%m/%d/%y")
-stocks<-c('IBM','GE','CocaCola','ProcterGamble','Boeing')
+stocks<-list(IBM,GE,CocaCola,ProcterGamble,Boeing)
 
 lapply(stocks,function(x){max(x[,2])})
 lapply(stocks,function(x){sd(x[[2]])})
+lapply(stocks,function(x){x[1,2]})
+
+
 
 mean(IBM$StockPrice)
 min(GE$StockPrice)
@@ -80,4 +83,14 @@ abline(h=min(CocaCola$StockPrice), col='red')
 
 lines(ProcterGamble$Date, ProcterGamble$StockPrice, col='black',lty=2)
 abline(h=min(ProcterGamble$StockPrice), col='green')
+abline(v=as.Date(c("1983-03-01")), lwd=2,col=2)
+
+plot(IBM$Date[301:432], IBM$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
+plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
+#color=c('2','3','4','5')
+lapply(stocks[c(1:2,4:5)],function(x){lines(x$Date[301:432], x$StockPrice[301:432], col=x[1,2])})
+lapply(stocks,function(x){str(x);plot(x$Date[301:432], x$StockPrice[301:432], col=x[1,2]+3,type="l",ylim=c(0,210));abline(v=x$Date[x$Date=="2000-04-01"])})
+stocks<-list(IBM,GE,CocaCola,ProcterGamble,Boeing)
+
+
 #Week 2
