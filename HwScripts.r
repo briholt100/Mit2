@@ -66,7 +66,7 @@ CocaCola$Date = as.Date(CocaCola$Date, "%m/%d/%y")
 ProcterGamble$Date = as.Date(ProcterGamble$Date, "%m/%d/%y")
 Boeing$Date = as.Date(Boeing$Date, "%m/%d/%y")
 stocks<-list(IBM,GE,CocaCola,ProcterGamble,Boeing)
-
+names(stocks) <- c("IBM", "GE", "CocaCola",'Proctor','Boeing' )
 lapply(stocks,function(x){max(x[,2])})
 lapply(stocks,function(x){sd(x[[2]])})
 lapply(stocks,function(x){x[1,2]})
