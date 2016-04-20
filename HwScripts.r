@@ -88,9 +88,7 @@ abline(v=as.Date(c("1983-03-01")), lwd=2,col=2)
 plot(IBM$Date[301:432], IBM$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
 plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
 #color=c('2','3','4','5')
-lapply(stocks[c(1:2,4:5)],function(x){lines(x$Date[301:432], x$StockPrice[301:432], col=x[1,2])})
-lapply(stocks,function(x){str(x);plot(x$Date[301:432], x$StockPrice[301:432], col=x[1,2]+3,type="l",ylim=c(0,210));abline(v=x$Date[x$Date=="2000-04-01"])})
-stocks<-list(IBM,GE,CocaCola,ProcterGamble,Boeing)
+lapply(stocks[c(1:2,4:5)],function(x){lines(x$Date[301:432], x$StockPrice[301:432],lty=,ylim=c(0,210))})
 
 
 #Week 2
