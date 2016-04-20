@@ -85,10 +85,28 @@ lines(ProcterGamble$Date, ProcterGamble$StockPrice, col='black',lty=2)
 abline(h=min(ProcterGamble$StockPrice), col='green')
 abline(v=as.Date(c("1983-03-01")), lwd=2,col=2)
 
-plot(IBM$Date[301:432], IBM$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
-plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="1", ylim=c(0,210))
-#color=c('2','3','4','5')
-lapply(stocks[c(1:2,4:5)],function(x){lines(x$Date[301:432], x$StockPrice[301:432],lty=,ylim=c(0,210))})
+plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col=3, ylim=c(0,210))
 
+plot_Lines<-function(x,y){
+  y<-readline('please enter a number for a color...... ')
+  lines(x$Date[301:432],
+        x$StockPrice[301:432],
+        col=y,
+        ylim=c(0,210)
+        )
+  }
+lapply(stocks[c(1:5)],plot_Lines)
+legend("topright",legend=names(stocks),text.col=c(1:5), cex=.8)
+abline(v=as.Date("1997-09-01"),col='red')
+abline(v=as.Date("1997-11-01"),col='blue')
+
+abline(v=as.Date("2004-01-01"),col='red')
+abline(v=as.Date("2005-01-01"),col='blue')
+
+
+sort(tapply(IBM$StockPrice,months(IBM$Date),mean))
+
+lapply(stocks,function(x){sort(tapply(x$StockPrice,months(x$Date),mean))})
+lapply(stocks,function(x){mean(x$StockPrice)})
 
 #Week 2
