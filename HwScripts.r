@@ -3,7 +3,7 @@
 #week 1
 
 wrkdir<-'/home/brian/Projects/Mit2'
-
+#wrkdir<-'I:\\My Data Sources\\mooc\\Mit2'
 setwd(wrkdir)
 
 WHO<-read.csv('./data/WHO.csv')
