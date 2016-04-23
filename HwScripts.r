@@ -3,7 +3,7 @@
 #week 1
 
 wrkdir<-'/home/brian/Projects/Mit2'
-
+#wrkdir<-"I:\My Data Sources\mooc\Mit2" #at campus
 setwd(wrkdir)
 
 WHO<-read.csv('./data/WHO.csv')
@@ -152,3 +152,11 @@ sort(table(CPS$Country))
 table(CPS$MetroArea=="New York-Northern New Jersey-Long Island, NY-NJ-PA",CPS$Country!="United States",useNA='no')
 
 Which metropolitan area has the largest number (note -- not proportion) of interviewees with a country of birth in India?
+
+
+#Extra work
+poll<-read.csv('./data/AnonymityPoll.csv')
+str(poll)
+
+
+#Week 2
