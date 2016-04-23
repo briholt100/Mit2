@@ -110,3 +110,25 @@ lapply(stocks,function(x){sort(tapply(x$StockPrice,months(x$Date),mean))})
 lapply(stocks,function(x){mean(x$StockPrice)})
 
 #Week 2
+
+CPS<-read.csv('./data/CPSData.csv')
+summary(CPS)
+str(CPS)
+sort(table(CPS$Ind,useNA='always'))
+sort(table(CPS$State))
+sort(table(CPS$Cit))/nrow(CPS)
+
+(table(CPS$Hispanic,CPS$Race))
+table(CPS$Region, is.na(CPS$Married))
+table(CPS$Sex, is.na(CPS$Married))
+table(CPS$Age, is.na(CPS$Married))
+table(CPS$Cit, is.na(CPS$Married))
+(table(CPS$State, is.na(CPS$MetroA)))
+
+(table(CPS$Region,is.na(CPS$MetroA)))
+sort(tapply(is.na(CPS$MetroA),CPS$State,mean))
+
+MetroAreaMap<-read.csv('./data/MetroAreaCodes.csv')
+str(MetroAreaMap)
+CountryMap<-read.csv('./data/CountryCodes.csv')
+str(CountryMap)
