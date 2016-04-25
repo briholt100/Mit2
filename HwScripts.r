@@ -3,7 +3,7 @@
 #week 1
 
 wrkdir<-'/home/brian/Projects/Mit2'
-#wrkdir<-'I:\\My Data Sources\\mooc\\Mit2'
+#wrkdir<-"I:\My Data Sources\mooc\Mit2" #at campus
 setwd(wrkdir)
 
 WHO<-read.csv('./data/WHO.csv')
@@ -108,5 +108,55 @@ sort(tapply(IBM$StockPrice,months(IBM$Date),mean))
 
 lapply(stocks,function(x){sort(tapply(x$StockPrice,months(x$Date),mean))})
 lapply(stocks,function(x){mean(x$StockPrice)})
+
+#Week 2
+
+CPS<-read.csv('./data/CPSData.csv')
+summary(CPS)
+str(CPS)
+
+MetroAreaMap<-read.csv('./data/MetroAreaCodes.csv')
+str(MetroAreaMap)
+CountryMap<-read.csv('./data/CountryCodes.csv')
+str(CountryMap)
+
+
+sort(table(CPS$Ind,useNA='always'))
+sort(table(CPS$State))
+sort(table(CPS$Cit))/nrow(CPS)
+
+(table(CPS$Hispanic,CPS$Race))
+table(CPS$Region, is.na(CPS$Married))
+table(CPS$Sex, is.na(CPS$Married))
+table(CPS$Age, is.na(CPS$Married))
+table(CPS$Cit, is.na(CPS$Married))
+(table(CPS$State, is.na(CPS$MetroA)))
+
+(table(CPS$Region,is.na(CPS$MetroA)))
+sort(tapply(is.na(CPS$MetroA),CPS$State,mean))
+
+CPS = merge(CPS, MetroAreaMap, by.x="MetroAreaCode", by.y="Code", all.x=TRUE)
+summary(CPS)
+str(CPS)
+sort(table(CPS$MetroArea))
+sort(tapply(CPS$Hispanic,CPS$MetroArea,mean))
+
+sort(tapply(CPS$Race == "Asian",CPS$MetroArea,mean))
+
+sort(tapply(CPS$Education == "No high school diploma", CPS$MetroArea, mean, na.rm=T))
+
+CPS = merge(CPS, CountryMap , by.x="CountryOfBirthCode", by.y="Code", all.x=TRUE)
+
+sort(table(CPS$Country))
+
+table(CPS$MetroArea=="New York-Northern New Jersey-Long Island, NY-NJ-PA",CPS$Country!="United States",useNA='no')
+
+Which metropolitan area has the largest number (note -- not proportion) of interviewees with a country of birth in India?
+
+
+#Extra work
+poll<-read.csv('./data/AnonymityPoll.csv')
+str(poll)
+
 
 #Week 2
