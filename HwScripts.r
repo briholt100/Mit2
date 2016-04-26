@@ -160,3 +160,22 @@ str(poll)
 
 
 #Week 2
+
+
+wine<-read.csv('./data/wine.csv')
+wine_test<-read.csv('./data/wine_test.csv')
+str(wine)
+summary(wine)
+model1<-lm(Price~AGST, data=wine)
+summary(model1)
+
+model2<-lm(Price~AGST+HarvestRain, data=wine)
+summary(model2)
+
+model3<-lm(Price~.-Year, data=wine)
+summary(model3)
+
+#questions with vids
+model<-lm(Price~WinterRain+HarvestRain, data=wine)
+summary(model)
+cor(wine)
