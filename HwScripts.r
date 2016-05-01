@@ -179,3 +179,56 @@ summary(model3)
 model<-lm(Price~WinterRain+HarvestRain, data=wine)
 summary(model)
 cor(wine)
+
+
+
+climate<-read.csv('./data/climate_change.csv')
+str(climate)
+train<-subset(climate,Year<=2006)
+test<-subset(climate,Year>2006)
+model1<-lm(Temp~.-Year -Month, data=train)
+summary(model1)
+cor(train)
+
+model2<-lm(Temp~MEI+TSI+Aerosols+N2O, data=train)
+summary(model2)
+
+Model1Step<-step(model1)
+
+pred1<-predict(Model1Step,newdata=test)
+
+SSE= sum((test$Temp-pred1)^2)
+SST= sum((test$Temp-mean(train$Temp))^2)
+1-SSE/SST
+
+
+#week 2 part 2
+
+pisaTrain<-read.csv('./data/pisa2009train.csv')
+pisaTest<-read.csv('./data/pisa2009test.csv')
+
+str(pisaTrain)
+tapply(pisaTrain$readingScore,pisaTrain$male,mean)
+
+pisaTrain = na.omit(pisaTrain)
+
+pisaTest = na.omit(pisaTest)
+pisaTrain$raceeth = relevel(pisaTrain$raceeth, "White")
+pisaTest$raceeth = relevel(pisaTest$raceeth, "White")
+
+lmScore<-lm(readingScore~.,data=pisaTrain)
+summary(lmScore)
+
+pred1<-predict(lmScore,newdata=pisaTrain)
+SSE= sum((pisaTrain$readingScore-pred1)^2)
+RMSE=sqrt(SSE/nrow(pisaTrain))
+
+predTest<-predict(lmScore,newdata=pisaTest)
+SSE= sum((pisaTest$readingScore-predTest)^2)
+SST= sum((pisaTest$readingScore-mean(pisaTrain$readingScore))^2)
+
+RMSE=sqrt(SSE/nrow(pisaTest))
+
+1-SSE/SST
+
+
