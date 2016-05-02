@@ -232,3 +232,33 @@ RMSE=sqrt(SSE/nrow(pisaTest))
 1-SSE/SST
 
 
+#week 2 set 3
+
+##FluTrain
+
+FluTrain<-read.csv("./data/FluTrain.csv")
+str(FluTrain)
+head(FluTrain$Week)
+FluTrain$Week<-as.Date(FluTrain$Week)
+table1<-tapply(FluTrain$ILI,FluTrain$Week,sum)
+which.max(subset(table1,FluTrain$Week<"2010-01-01"))
+
+table2<-tapply(FluTrain$Queries,FluTrain$Week,sum)
+table2<-(subset(table2,FluTrain$Week<"2010-01-01"))
+which.max(table2)
+FluTrain[FluTrain$Week=="2010-10-17",]
+
+hist(FluTrain$ILI)
+plot(log(FluTrain$ILI),FluTrain$Que)
+
+FluTrend1<-lm(log(ILI)~Queries,data=FluTrain)
+summary(FluTrend1)
+
+cor(log(FluTrain$ILI),FluTrain$Que)^2
+
+FluTest<-read.csv("./data/FluTest.csv")
+PredTest1 = exp(predict(FluTrend1, newdata=FluTest))
+PredTest1[grep("2012-03-11",FluTest$Week)] #finds record of march 11, 2012 in fluTest, then pulls our prediction
+#Observed ILI compared to estimated:
+(FluTest$ILI[11]-PredTest1[11])/FluTest$ILI[11] #relative error
+
