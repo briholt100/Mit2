@@ -3,7 +3,7 @@
 #week 1
 
 wrkdir<-'/home/brian/Projects/Mit2'
-#wrkdir<-"I:\My Data Sources\mooc\Mit2" #at campus
+#wrkdir<-"I:\\My Data Sources\\mooc\\Mit2" #at campus
 setwd(wrkdir)
 
 WHO<-read.csv('./data/WHO.csv')
@@ -261,4 +261,28 @@ PredTest1 = exp(predict(FluTrend1, newdata=FluTest))
 PredTest1[grep("2012-03-11",FluTest$Week)] #finds record of march 11, 2012 in fluTest, then pulls our prediction
 #Observed ILI compared to estimated:
 (FluTest$ILI[11]-PredTest1[11])/FluTest$ILI[11] #relative error
+
+#week 3 logistic
+
+quality<-read.csv(file="./Data/quality.csv")
+install.packages("caTools")
+
+library(caTools)
+
+set.seed(88)
+split = sample.split(quality$PoorCare, SplitRatio = 0.75)
+qualityTrain = subset(quality, split == TRUE)
+qualityTest = subset(quality, split == FALSE)
+
+QualityLog<-glm(PoorCare~StartedOnCombination+ProviderCount,data=qualityTrain,family=binomial)
+QualityLog<-glm(PoorCare~OfficeVisits+Narcotics,data=qualityTrain,family=binomial)
+predictTest = predict(QualityLog, type="response", newdata=qualityTest)
+install.packages("ROCR")
+library(ROCR)
+
+ROCRpredTest = prediction(predictTest, qualityTest$PoorCare)
+ROCRperf<-performance(ROCRpredTest,"tpr","fpr")
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+
+auc = as.numeric(performance(ROCRpredTest, "auc")@y.values)
 
