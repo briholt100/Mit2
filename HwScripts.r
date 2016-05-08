@@ -286,3 +286,48 @@ plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
 
 auc = as.numeric(performance(ROCRpredTest, "auc")@y.values)
 
+
+
+
+CSD<-read.csv(file="./data/framingham.csv")
+str(CSD)
+
+
+framingham <-CSD
+
+# Look at structure
+str(framingham)
+
+# Load the library caTools
+library(caTools)
+
+# Randomly split the data into training and testing sets
+set.seed(1000)
+split = sample.split(framingham$TenYearCHD, SplitRatio = 0.65)
+
+# Split up the data using subset
+train = subset(framingham, split==TRUE)
+test = subset(framingham, split==FALSE)
+
+# Logistic Regression Model
+framinghamLog = glm(TenYearCHD ~ ., data = train, family=binomial)
+summary(framinghamLog)
+
+# Predictions on the test set
+predictTest = predict(framinghamLog, type="response", newdata=test)
+
+# Confusion matrix with threshold of 0.5
+table(test$TenYearCHD, predictTest > 0.5)  #table entries are y, x respectively.
+
+# Accuracy
+(1069+11)/(1069+6+187+11)
+
+# Baseline accuracy
+(1069+6)/(1069+6+187+11)
+
+# Test set AUC
+library(ROCR)
+ROCRpred = prediction(predictTest, test$TenYearCHD)
+as.numeric(performance(ROCRpred, "auc")@y.values)
+ROCRperf<-performance(ROCRpred,"tpr","fpr")
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
