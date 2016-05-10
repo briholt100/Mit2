@@ -331,3 +331,64 @@ ROCRpred = prediction(predictTest, test$TenYearCHD)
 as.numeric(performance(ROCRpred, "auc")@y.values)
 ROCRperf<-performance(ROCRpred,"tpr","fpr")
 plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+
+#week 3
+
+
+songs<-read.csv('./data/songs.csv')
+str(songs)
+(songs[which(songs$artistname=="Michael Jackson" & songs$Top10==1),c('year',"songtitle")])
+table(songs$timesignature)
+songs[which.max(songs$tempo),2]
+
+SongsTrain<-subset(songs,songs$year<=2009)
+SongsTest<-subset(songs,songs$year>2009)
+nrow(SongsTrain)
+nonvars = c("year", "songtitle", "artistname", "songID", "artistID")
+SongsTrain = SongsTrain[ , !(names(SongsTrain) %in% nonvars) ]
+SongsTest = SongsTest[ , !(names(SongsTest) %in% nonvars) ]
+
+SongsLog1<-glm(Top10~., data=SongsTrain,family="binomial")
+summary(SongsLog1)
+
+cor(SongsTrain$energy,SongsTrain$loudness)
+
+
+SongsLog2<-glm(Top10~.-loudness, data=SongsTrain,family="binomial")
+summary(SongsLog2)
+
+SongsLog3<-glm(Top10~.-energy, data=SongsTrain,family="binomial")
+summary(SongsLog3)
+
+songsPred1<-predict(SongsLog3,type='response')
+#Train set
+tbl<-table(SongsTrain$Top10,songsPred1 > .45)
+#accuracy
+(tbl[1,1]+tbl[2,2])/(sum(tbl[1,1],tbl[2,1],tbl[1,2],tbl[2,2]))
+
+# Logistic Regression Model
+SongsLog3<-glm(Top10~.-energy, data=SongsTrain,family="binomial")
+summary(SongsLog3)
+
+# Predictions on the test set
+songsPred1<-predict(SongsLog3, type="response", newdata=SongsTest)
+
+# Confusion matrix with threshold of 0.45
+tbl<-table(SongsTest$Top10,songsPred1 >.45)
+
+#accuracy
+(tbl[1,1]+tbl[2,2])/(sum(tbl[1,1],tbl[2,1],tbl[1,2],tbl[2,2]))
+
+#sensitivity
+(tbl[2,2])/(sum(tbl[2,1],tbl[2,2]))
+
+#specificity
+(tbl[1,1])/(sum(tbl[1,1],tbl[1,2]))
+
+
+
+parole<-read.csv('./data/parole.csv')
+table(parole$vio)
+
+
+
