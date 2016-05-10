@@ -389,6 +389,61 @@ tbl<-table(SongsTest$Top10,songsPred1 >.45)
 
 parole<-read.csv('./data/parole.csv')
 table(parole$vio)
+parole$state<-as.factor(parole$state)
+parole$crime<-as.factor(parole$crime)
+
+set.seed(144)
+library(caTools)
+split = sample.split(parole$violator, SplitRatio = 0.7)
+train = subset(parole, split == TRUE)
+test = subset(parole, split == FALSE)
+
+paroleLog<-glm(violator~., data=train,family="binomial")
+summary(paroleLog)
+
+"""
+Explanation
+
+For parolees A and B who are identical other than A having committed multiple offenses, the predicted log odds of A is 1.61 more than the predicted log odds of B. Then we have:
+
+ln(odds of A) = ln(odds of B) + 1.61
+
+exp(ln(odds of A)) = exp(ln(odds of B) + 1.61)
+
+exp(ln(odds of A)) = exp(ln(odds of B)) * exp(1.61)
+
+odds of A = exp(1.61) * odds of B
+
+odds of A= 5.01 * odds of B
+
+In the second step we raised e to the power of both sides. In the third step we used the exponentiation rule that e^(a+b) = e^a * e^b. In the fourth step we used the rule that e^(ln(x)) = x.
+"""
+
+paroleLog$coef
+case1<-data.frame(1,1,50,1,3,12,0,2,0)
+colnames(case1)<-colnames(parole)
+case1$state<-as.factor(case1$state)
+case1$crime<-as.factor(case1$crime)
+prob<-predict(paroleLog,newdata=case1,type="response")
+prob/(1-prob)#odds
 
 
+#test
+predTest<-predict(paroleLog,newdata=test,type="response")
+which.max(predTest)
+
+tbl<-table(test$violator,predTest >.5)
+
+#accuracy
+(tbl[1,1]+tbl[2,2])/(sum(tbl[1,1],tbl[2,1],tbl[1,2],tbl[2,2]))
+#sensitivity
+(tbl[2,2])/(sum(tbl[2,1],tbl[2,2]))
+#specificity
+(tbl[1,1])/(sum(tbl[1,1],tbl[1,2]))
+#basic
+table(test$violator)
+
+ROCRpredVio = prediction(predTest, test$violator)
+auc = as.numeric(performance(ROCRpredVio, "auc")@y.values)
+plot(ROCRpredVio,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
 
