@@ -447,3 +447,9 @@ ROCRpredVio = prediction(predTest, test$violator)
 auc = as.numeric(performance(ROCRpredVio, "auc")@y.values)
 plot(ROCRpredVio,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
 
+
+#Prob 3, week 3
+loans<-read.csv('./data/loans.csv')
+summary(loans)
+str(loans)
+table(loans$not.fully.paid)
