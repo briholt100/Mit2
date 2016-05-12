@@ -447,3 +447,55 @@ ROCRpredVio = prediction(predTest, test$violator)
 auc = as.numeric(performance(ROCRpredVio, "auc")@y.values)
 plot(ROCRpredVio,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
 
+
+
+#Week 4 1
+
+
+
+
+gb<-read.csv('./data/gerber.csv')
+str(gb)
+tbl<-table(gb$voting)
+tbl[2]/(tbl[1]+tbl[2])  #proportion voting
+tx<-list("hawthorne","civicduty",'neighbors','self','control')
+
+temp<-function(x,y){table(x,y)[4]/sum(table(x,y)[3],table(x,y)[4])}  # note the ordered positions in brackets
+lapply(gb[,4:8],function(y) temp(x=gb$voting,y))
+
+gbLog<-glm(voting~civicduty +hawthorne+self+neighbors,data=gb,family='binomial')
+summary(gbLog)
+
+pred1<-predict(gbLog,type="response")
+tbl<-table(gb$voting,pred1>.3) # works
+
+#accuracy
+(tbl[1,1]+tbl[2,2])/(sum(tbl[1,1],tbl[2,1],tbl[1,2],tbl[2,2]))
+TableAccuracy<-function(x,y){(table(x,y)[1]+table(x,y)[4])/sum(table(x,y)[1],table(x,y)[2],table(x,y)[3],table(x,y)[4])}
+
+#sensitivity
+(tbl[2,2])/(sum(tbl[2,1],tbl[2,2]))
+#specificity
+(tbl[1,1])/(sum(tbl[1,1],tbl[1,2]))
+
+tbl<-table(gb$voting,pred1>.5) # more complicated because there aren't any above .5.
+#fill out the confusion matrix with 0's
+ 235388/(235388+108696)
+
+library(ROCR)
+ROCRpredict<-prediction(pred1,gb$voting)
+ROCRperf<-performance(ROCRpredict, "tpr","fpr")
+auc = as.numeric(performance(ROCRpredict, "auc")@y.values)
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+
+library(rpart)
+install.packages("rpart.plot")
+library(rpart.plot)
+
+CARTmodel = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb)
+summary(CARTmodel)
+prp(CARTmodel)
+
+CARTmodel2 = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb, cp=0.0)
+summary(CARTmodel2)
+prp(CARTmodel2)
