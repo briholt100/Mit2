@@ -489,7 +489,6 @@ auc = as.numeric(performance(ROCRpredict, "auc")@y.values)
 plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
 
 library(rpart)
-install.packages("rpart.plot")
 library(rpart.plot)
 
 CARTmodel = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb)
@@ -499,3 +498,53 @@ prp(CARTmodel)
 CARTmodel2 = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb, cp=0.0)
 summary(CARTmodel2)
 prp(CARTmodel2)
+
+CARTmodel3 = rpart(voting ~ civicduty + hawthorne + self + neighbors  +sex, data=gb, cp=0.0)
+summary(CARTmodel3)
+prp(CARTmodel3)
+
+CARTmodel4 = rpart(voting ~ +control, data=gb, cp=0.0)
+summary(CARTmodel4)
+prp(CARTmodel4,digits = 6)
+
+CARTmodel5 = rpart(voting ~ +control +sex, data=gb, cp=0.0)
+summary(CARTmodel5)
+prp(CARTmodel5,digits = 6)
+
+gbLog1<-glm(voting ~ +control+sex, data=gb, family='binomial')
+summary(gbLog1)
+
+Possibilities = data.frame(sex=c(0,0,1,1),control=c(0,1,0,1))
+predict(gbLog1, newdata=Possibilities, type="response")
+
+gbLog2<-glm(voting ~ +control*sex, data=gb, family='binomial')
+summary(gbLog2)
+
+LogModel2 = glm(voting ~ sex + control + sex:control, data=gb, family="binomial")
+summary(LogModel2 )
+
+predict(LogModel2, newdata=Possibilities, type="response")
+
+
+letters<-read.csv('./data/letters_ABPR.csv')
+str(letters)
+letters$isB<-as.factor(letters$letter=="B")
+
+library(caTools)
+set.seed(1000)
+split<-sample.split(letters$isB,SplitRatio = .5)
+train<-subset(letters,split==T)
+test<-subset(letters,split==F)
+
+#baseline model, which is just the most frequent score.
+
+table(train$isB)[1]/nrow(train)
+
+CARTb = rpart(isB ~ . - letter, data=train, method="class")
+
+predCartB<-predict(CARTb,newdata=test,type='class')
+tbl<-table(test$isB,predCartB)
+
+(tbl[1]+tbl[4])/sum(tbl[1:4])
+
+
