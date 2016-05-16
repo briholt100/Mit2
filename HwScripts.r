@@ -489,14 +489,13 @@ tbl<-table(gb$voting,pred1>.5) # more complicated because there aren't any above
  235388/(235388+108696)
 
 library(ROCR)
+library(rpart)
+library(rpart.plot)
+
 ROCRpredict<-prediction(pred1,gb$voting)
 ROCRperf<-performance(ROCRpredict, "tpr","fpr")
 auc = as.numeric(performance(ROCRpredict, "auc")@y.values)
 plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
-
-library(rpart)
-install.packages("rpart.plot")
-library(rpart.plot)
 
 CARTmodel = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb)
 summary(CARTmodel)
@@ -505,3 +504,305 @@ prp(CARTmodel)
 CARTmodel2 = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gb, cp=0.0)
 summary(CARTmodel2)
 prp(CARTmodel2)
+
+CARTmodel3 = rpart(voting ~ civicduty + hawthorne + self + neighbors  +sex, data=gb, cp=0.0)
+summary(CARTmodel3)
+prp(CARTmodel3)
+
+CARTmodel4 = rpart(voting ~ +control, data=gb, cp=0.0)
+summary(CARTmodel4)
+prp(CARTmodel4,digits = 6)
+
+CARTmodel5 = rpart(voting ~ +control +sex, data=gb, cp=0.0)
+summary(CARTmodel5)
+prp(CARTmodel5,digits = 6)
+
+gbLog1<-glm(voting ~ +control+sex, data=gb, family='binomial')
+summary(gbLog1)
+
+Possibilities = data.frame(sex=c(0,0,1,1),control=c(0,1,0,1))
+predict(gbLog1, newdata=Possibilities, type="response")
+
+gbLog2<-glm(voting ~ +control*sex, data=gb, family='binomial')
+summary(gbLog2)
+
+LogModel2 = glm(voting ~ sex + control + sex:control, data=gb, family="binomial")
+summary(LogModel2 )
+
+predict(LogModel2, newdata=Possibilities, type="response")
+
+
+# VIDEO 4
+
+# Read in the data
+stevens = read.csv("./data/stevens.csv")
+str(stevens)
+
+# Split the data
+library(caTools)
+set.seed(3000)
+spl = sample.split(stevens$Reverse, SplitRatio = 0.7)
+Train = subset(stevens, spl==TRUE)
+Test = subset(stevens, spl==FALSE)
+
+# Install rpart library
+install.packages("rpart")
+library(rpart)
+install.packages("rpart.plot")
+library(rpart.plot)
+
+# CART model
+StevensTree = rpart(Reverse ~ Circuit + Issue + Petitioner + Respondent + LowerCourt + Unconst, data = Train, method="class", minbucket=25)
+
+prp(StevensTree)
+
+# Make predictions
+PredictCART = predict(StevensTree, newdata = Test, type = "class")
+table(Test$Reverse, PredictCART)
+(41+71)/(41+36+22+71)
+
+# ROC curve
+library(ROCR)
+
+PredictROC = predict(StevensTree, newdata = Test)
+PredictROC
+
+pred = prediction(PredictROC[,2], Test$Reverse)
+perf = performance(pred, "tpr", "fpr")
+plot(perf)
+
+auc = as.numeric(performance(pred, "auc")@y.values)
+
+StevensTree = rpart(Reverse ~ Circuit + Issue + Petitioner + Respondent + LowerCourt + Unconst, data = Train, method="class", minbucket=100)
+prp(StevensTree)
+install.packages('randomForest')
+library(randomForest)
+
+Train$Reverse<-as.factor(Train$Reverse)
+Test$Reverse<-as.factor(Test$Reverse)
+
+set.seed(200)
+StevensForest = randomForest(Reverse ~ Circuit + Issue + Petitioner + Respondent + LowerCourt + Unconst, data = Train, nodesize=25, ntrees=200)
+
+stevensForPred<-predict(StevensForest,newdata=Test)
+table(Test$Reverse,stevensForPred)
+
+
+cartGrid = expand.grid( .cp = seq(0.01,0.5,0.01))
+fitControl = trainControl( method = "cv", number = 10 ) #cv=cross val, 10= folds
+set.seed(2)
+train(Reverse~Circuit + Issue + Petitioner + Respondent + LowerCourt + Unconst, data = Train, method = "rpart", trControl = fitControl, tuneGrid = cartGrid )
+
+stevensTreeCV<-rpart(Reverse ~ Circuit + Issue + Petitioner + Respondent + LowerCourt + Unconst, data = Train, method="class", cp=.18)
+
+predictCvTree<-predict(stevensTreeCV,newdata=Test,type='class')
+table(Test$Reverse,predictCvTree)
+
+prp(stevensTreeCV)
+
+letters<-read.csv('./data/letters_ABPR.csv')
+str(letters)
+letters$isB<-as.factor(letters$letter=="B")
+library(ROCR)
+library(rpart)
+library(rpart.plot)
+
+library(caTools)
+set.seed(1000)
+split<-sample.split(letters$isB,SplitRatio = .5)
+train<-subset(letters,split==T)
+test<-subset(letters,split==F)
+
+#baseline model, which is just the most frequent score.
+
+table(train$isB)[1]/nrow(train)
+
+CARTb = rpart(isB ~ . - letter, data=train, method="class")
+
+predCartB<-predict(CARTb,newdata=test,type='class')
+tbl<-table(test$isB,predCartB)
+
+(tbl[1]+tbl[4])/sum(tbl[1:4])
+
+set.seed(1000)
+lettersForest<-randomForest(isB ~ . - letter, data=train)
+letterForPred<-predict(lettersForest,newdata=test)
+table(test$isB,letterForPred)
+(385+393+387+374)/(385+9+374+393+3+7+387)
+
+letters$letter = as.factor( letters$letter )
+
+set.seed(2000)
+split<-sample.split(letters$letter,SplitRatio = .5)
+train<-subset(letters,split==T)
+test<-subset(letters,split==F)
+
+isBCart<-rpart(letter~. -isB,data=train,method= 'class')
+predisBCart<-predict(isBCart,newdata=test,type='class')
+table(test$letter,predisBCart)
+
+isBForest<-randomForest(letter~. -isB,data=train,type= 'class')
+predisBCart<-predict(isBForest,newdata=test,type='class')
+table(test$letter,predisBCart)
+
+install.packages("caret")
+install.packages("e1071")
+library(caret)
+library(e1071)
+
+
+hw prob#3
+library(ROCR)
+library(rpart)
+library(rpart.plot)
+library(caTools)
+
+census<-read.csv('./data/census.csv')
+str(census)
+
+set.seed(2000)
+split<-sample.split(census$over50k,SplitRatio = .6)
+train<-subset(census,split==T)
+test<-subset(census,split==F)
+
+over50log<-glm(over50k~.,data=train, family='binomial')
+summary(over50log)
+
+over50PredLog<-predict(over50log,newdata=test,type='response')
+table(test$over50k,over50PredLog >.5)
+table(test$over50k)
+
+library(ROCR)
+
+ROCRpredTest = prediction(over50PredLog, test$over50k)
+ROCRperf<-performance(ROCRpredTest,"tpr","fpr")
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+
+auc = as.numeric(performance(ROCRpredTest, "auc")@y.values)
+
+over50Cart<-rpart(over50k~.,data=train, method='class')
+summary(over50Cart)
+rpart.plot(over50Cart)
+
+over50CartPred<-predict(over50Cart,newdata=test,type='prob')
+table(test$over50k,over50CartPred[,2]>=.5)
+
+ROCRpredTest= prediction(over50CartPred[,2], test$over50k)
+ROCRperf<-performance(ROCRpredTest,"tpr","fpr")
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+auc = as.numeric(performance(ROCRpredTest, "auc")@y.values)
+
+
+set.seed(1)
+trainSmall = train[sample(nrow(train), 2000), ]
+
+set.seed(1)
+over50Forest<-randomForest(over50k~.,data=trainSmall, method='class')
+summary(over50Forest)
+
+over50ForestPred<-predict(over50Forest,newdata=test,type='prob')
+table(test$over50k,over50ForestPred[,2]>=.5)
+
+vu = varUsed(over50Forest, count=TRUE,by.tree=F)
+
+vusorted = sort(vu, decreasing = FALSE, index.return = TRUE)
+
+dotchart(vusorted$x, names(over50Forest$forest$xlevels[vusorted$ix]))
+
+varImpPlot(over50Forest)
+set.seed(2)
+cartGrid = expand.grid( .cp = seq(0.002,0.1,0.002))
+fitControl = trainControl( method = "cv", number = 10 ) #cv=cross val, 10= folds
+set.seed(2)
+train(over50k~.,data=train, method = "rpart", trControl = fitControl, tuneGrid = cartGrid )
+
+over50Cart<-rpart(over50k~.,data=train, method='class',cp=.002)
+rpart.plot(over50Cart)
+over50CartPred<-predict(over50Cart,newdata=test)
+table(test$over50k,over50CartPred[,2]>.5)
+
+ROCRpredTest= prediction(over50CartPred[,2], test$over50k)
+ROCRperf<-performance(ROCRpredTest,"tpr","fpr")
+plot(ROCRperf,colorize=T,print.cutoffs.at=seq(0,1,.1),text.adj=c(-.2,1.7))
+auc = as.numeric(performance(ROCRpredTest, "auc")@y.values)
+
+
+
+
+
+# Read in the data
+Claims = read.csv("./data/ClaimsData.csv")
+
+str(Claims)
+
+# Percentage of patients in each cost bucket
+table(Claims$bucket2009)/nrow(Claims)
+
+# Split the data
+library(caTools)
+
+set.seed(88)
+
+spl = sample.split(Claims$bucket2009, SplitRatio = 0.6)
+
+ClaimsTrain = subset(Claims, spl==TRUE)
+
+ClaimsTest = subset(Claims, spl==FALSE)
+
+
+# VIDEO 7
+
+# Baseline method
+table(ClaimsTest$bucket2009, ClaimsTest$bucket2008)
+
+(110138 + 10721 + 2774 + 1539 + 104)/nrow(ClaimsTest)
+
+# Penalty Matrix
+PenaltyMatrix = matrix(c(0,1,2,3,4,2,0,1,2,3,4,2,0,1,2,6,4,2,0,1,8,6,4,2,0), byrow=TRUE, nrow=5)
+
+PenaltyMatrix
+
+# Penalty Error of Baseline Method
+as.matrix(table(ClaimsTest$bucket2009, ClaimsTest$bucket2008))*PenaltyMatrix
+
+sum(as.matrix(table(ClaimsTest$bucket2009, ClaimsTest$bucket2008))*PenaltyMatrix)/nrow(ClaimsTest) #penalty error
+
+
+# VIDEO 8
+
+# Load necessary libraries
+library(rpart)
+library(rpart.plot)
+
+# CART model
+ClaimsTree = rpart(bucket2009 ~ age + alzheimers + arthritis + cancer + copd + depression + diabetes + heart.failure + ihd + kidney + osteoporosis + stroke + bucket2008 + reimbursement2008, data=ClaimsTrain, method="class", cp=0.00005)
+
+prp(ClaimsTree)
+
+
+# Make predictions
+PredictTest = predict(ClaimsTree, newdata = ClaimsTest, type = "class")
+
+table(ClaimsTest$bucket2009, PredictTest)
+
+(114141 + 16102 + 118 + 201 + 0)/nrow(ClaimsTest)
+
+# Penalty Error
+as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix
+
+sum(as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix)/nrow(ClaimsTest)
+
+# New CART model with loss matrix
+ClaimsTree = rpart(bucket2009 ~ age + alzheimers + arthritis + cancer + copd + depression + diabetes + heart.failure + ihd + kidney + osteoporosis + stroke + bucket2008 + reimbursement2008, data=ClaimsTrain, method="class", cp=0.00005, parms=list(loss=PenaltyMatrix))
+
+# Redo predictions and penalty error
+PredictTest = predict(ClaimsTree, newdata = ClaimsTest, type = "class")
+
+table(ClaimsTest$bucket2009, PredictTest)
+
+(94310 + 18942 + 4692 + 636 + 2)/nrow(ClaimsTest)
+
+sum(as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix)/nrow(ClaimsTest)
+
+
+
