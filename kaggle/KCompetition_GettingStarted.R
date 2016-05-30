@@ -30,7 +30,8 @@ threshold = 0.5
 PredTrainLabels = as.factor(ifelse(PredTrain<threshold, "Democrat", "Republican"))
 PredTestLabels = as.factor(ifelse(PredTest<threshold, "Democrat", "Republican"))
 
-tbl<-table(train$Party,PredTrain>.5)
+tbl<-table(train$Party,PredTrain>.530)
+tbl
 (tbl[1]+tbl[4])/sum(tbl)
 # However, you can submit the file on Kaggle to see how well the model performs. You can make up to 5 submissions per day, so don't hesitate to just upload a solution to see how you did.
 
