@@ -18,32 +18,43 @@ dir()
 kaggle_train <- read.csv("./kaggle/train2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
 kaggle_test <- read.csv("./kaggle/test2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
 str(kaggle_train)
+str(kaggle_test)
 
+#join test and train
+train<-kaggle_train
+test<-kaggle_test
+trainParty<-train$Party
+train<-train[,-7]
+train$Party<-trainParty
+test$Party<-NA
+length(test)
+df<-rbind(train,test)
 
 
 #Explore and clean
-train<-kaggle_train
-train$sum_na<-apply(train,1,function(x) sum(is.na(x))) #adds count variable of NA
+
+df$sum_na<-apply(df,1,function(x) sum(is.na(x))) #adds count variable of NA
 
 #convert YOB to date
 library(lubridate)
-train$YOB<-year(as.POSIXct(paste(train$YOB,"-01","-01",sep=""),format='%Y'))
+df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
 
 #create age variable
-train$age<-year(today())-train$YOB #'today()' is a lubrdiate function
+df$age<-year(today())-df$YOB #'today()' is a lubrdiate function
 
-boxplot(train$age)
+boxplot(df$age)
 
-plot(train$age,train$sum_na)
-line<-(lm(train$sum_na~train$age))
+plot(df$age,df$sum_na)
+line<-(lm(df$sum_na~df$age))
 abline(line,col="purple",lwd=3)
-points(y=train$sum_na[train$Party=='Democrat'],x=train$age[train$Party=='Democrat'],col="blue")
-points(y=train$sum_na[train$Party=='Republican'],x=train$age[train$Party=='Republican'],col="red")
+points(y=df$sum_na[df$Party=='Democrat'],x=df$age[df$Party=='Democrat'],col="blue")
+points(y=df$sum_na[df$Party=='Republican'],x=df$age[df$Party=='Republican'],col="red")
+points(y=df$sum_na[is.na(df$Party)],x=df$age[is.na(df$Party)],col="green")
 
-train[which(train$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel","Party")]
+df[which(df$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel","Party")]
 
 
-#train<-train[complete.cases(train)==T,]  # read.csv na.strings = '' complete cases = 697
+#df<-df[complete.cases(df)==T,]  # read.csv na.strings = '' complete cases = 697
 
 
 install.packages("mice")
@@ -51,12 +62,12 @@ library(mice)
 
 # Multiple imputation
 #set.seed(144)
-summary(trainSource)
-imputed = complete(mice(trainSource[,2:109]))
+summary(df)
+imputed = complete(mice(df[,2:110]))
 summary(imputed)
-trainSource[,2:109] = imputed
-summary(trainSource)
-write.csv(trainSource, "trainSource.csv", row.names=FALSE)
+df[,2:110] = imputed
+summary(df)
+write.csv(df, "df.csv", row.names=FALSE)
 
 
 
