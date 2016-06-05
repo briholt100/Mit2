@@ -7,15 +7,69 @@ school<-"I:/My Data Sources/mooc/MitAnalytic"
 setwd(school)
 home<-getwd()
 setwd(paste0(home, "/mooc/MitAnal"))
+
+latitude<-getwd()
+setwd(paste0(latitude, "/Projects/Mit2"))
+
 dater<-getwd()
 setwd(paste0(dater, "/Mit2"))
 dir()
 
-train = read.csv("./kaggle/train2016.csv",stringsAsFactors=F)#,na.strings = c("NA", '',' '))
-test = read.csv("./kaggle/test2016.csv",stringsAsFactors=F)#,na.strings = c("NA", '',' '))
+kaggle_train <- read.csv("./kaggle/train2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
+kaggle_test <- read.csv("./kaggle/test2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
+str(kaggle_train)
+
+
 
 #Explore and clean
+train<-kaggle_train
+train$sum_na<-apply(train,1,function(x) sum(is.na(x))) #adds count variable of NA
+
+#convert YOB to date
+library(lubridate)
+train$YOB<-year(as.POSIXct(paste(train$YOB,"-01","-01",sep=""),format='%Y'))
+
+#create age variable
+train$age<-year(today())-train$YOB #'today()' is a lubrdiate function
+
+boxplot(train$age)
+
+plot(train$age,train$sum_na)
+line<-(lm(train$sum_na~train$age))
+abline(line,col="purple",lwd=3)
+points(y=train$sum_na[train$Party=='Democrat'],x=train$age[train$Party=='Democrat'],col="blue")
+points(y=train$sum_na[train$Party=='Republican'],x=train$age[train$Party=='Republican'],col="red")
+
+train[which(train$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel","Party")]
+
+
 #train<-train[complete.cases(train)==T,]  # read.csv na.strings = '' complete cases = 697
+
+
+install.packages("mice")
+library(mice)
+
+# Multiple imputation
+#set.seed(144)
+summary(trainSource)
+imputed = complete(mice(trainSource[,2:109]))
+summary(imputed)
+trainSource[,2:109] = imputed
+summary(trainSource)
+write.csv(trainSource, "trainSource.csv", row.names=FALSE)
+
+
+
+
+
+set.seed(144)
+spl = sample(1:nrow(train), size=0.7*nrow(train))
+train = train[spl,]
+test = train[-spl,]
+
+
+
+
 
 #convert blanks "" into "blank"; must read.csv stringsAsFactors=F
 train[train=='']<-'blank'
@@ -33,19 +87,6 @@ boxplot(train$age~train$Party)
 table(train$Gender,train$Party,is.na(train$age))
 
 
-#convert YOB to date
-library(lubridate)
-train$YOB<-year(as.POSIXct(paste(train$YOB,"-01","-01",sep=""),format='%Y'))
-test$YOB<-year(as.POSIXct(paste(test$YOB,"-01","-01",sep=""),format='%Y'))
-#create age variable
-train$age<-year(today())-train$YOB #'today()' is a lubrdiate function
-test$age<-year(today())-test$YOB #'today()' is a lubrdiate function
-
-boxplot(train$age)
-boxplot(test$age)
-
-train[which(train$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel","Party")]
-test[which(test$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel")]
 
 
 
