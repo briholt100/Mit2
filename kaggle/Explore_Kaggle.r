@@ -60,7 +60,7 @@ points(x=df$USER_ID[is.na(df$YOB)==T],y=df$YOB[is.na(df$YOB)==T],col="orange",ce
 
 for(i in 1:length(df$YOB)){
   if (!is.na(df$YOB[i])){
-    if(df$YOB[i] < 1938 | df$YOB[i]>2001) {  #originally 1925 and 2003, respectively; makes some gender issues of zero
+    if(df$YOB[i] < 1925 | df$YOB[i]>2003) {  #originally 1925 and 2003, respectively; makes some gender issues of zero
       df$YOB[i]<-NA
       print(df$YOB[i])
     }
@@ -97,8 +97,6 @@ df$USER_ID<-dfUser_id
 imputed_df<-imputed
 imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
-#imputed_df$train_set<-factor(imputed_df$train_set, labels = c("test","train"))
-
 
 #create age variable
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
@@ -108,8 +106,8 @@ df<-imputed_df
 
 #return df back to test and train, split train set
 
-train<-df[which(df$train_set=='train'),]
-test<-df[which(df$train_set!='train'),]
+train<-df[which(df$train_set==T),]
+test<-df[which(df$train_set==F),]
 nrow(test)
 nrow(train)
 
@@ -118,22 +116,19 @@ spl = sample(1:nrow(train), size=0.7*nrow(train))
 train_df = train[spl,]
 test_df = train[-spl,]
 
-
-
-temp<-train_df[which(train_df$YOB != c('1928','1937','2003')),]
 # We will just create a simple logistic regression model, to predict Party using all other variables in the dataset, except for the user ID:
 
-SimpleMod = glm(Party ~ . -USER_ID -train_set -YOB, data=temp, family=binomial)
+SimpleMod = glm(Party ~ . -USER_ID -train_set -YOB, data=train_df, family=binomial)
 summary(SimpleMod)
 # And then make predictions on the test set:
-PredTrain = predict(SimpleMod,newdata=train, type="response")
+PredTrain = predict(SimpleMod,newdata=train_df, type="response")
 PredTest = predict(SimpleMod, newdata=test, type="response")
 
 threshold = 0.5
 PredTrainLabels = as.factor(ifelse(PredTrain<threshold, "Democrat", "Republican"))
 PredTestLabels = as.factor(ifelse(PredTest<threshold, "Democrat", "Republican"))
 
-tbl<-table(train$Party,PredTrain>.50)
+tbl<-table(train_df$Party,PredTrain>.50)
 tbl
 (tbl[1]+tbl[4])/sum(tbl)
 # However, you can submit the file on Kaggle to see how well the model performs. You can make up to 5 submissions per day, so don't hesitate to just upload a solution to see how you did.
@@ -154,11 +149,11 @@ write.csv(MySubmission, "./kaggle/SubmissionSimpleLog.csv", row.names=FALSE)
 library(rpart)
 library(rpart.plot)
 
-simpleCartMod1<-rpart(Party ~ . -USER_ID -YOB, data=train, method="class")
+simpleCartMod1<-rpart(Party ~ . -USER_ID -train_set -YOB, data=train_df, method="class")
 prp(simpleCartMod1)
 
-predCartTrain1<-predict(simpleCartMod1,newdata=train,type='class')
-tbl<-table(train$Party,predCartTrain1)
+predCartTrain1<-predict(simpleCartMod1,newdata=test_df,type='class')
+tbl<-table(test_df$Party,predCartTrain1)
 tbl
 (tbl[1]+tbl[4])/sum(tbl)
 
