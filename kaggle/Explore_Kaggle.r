@@ -25,47 +25,42 @@ test$Party<-NA
 trainParty<-train$Party
 train<-train[,-7]  #step 1 to move 'party' to end
 train$Party<-trainParty #step 2 to move party to end
-train$data_set<-"train"
+train$train_set<-TRUE
 test$Party<-NA
-test$data_set<-"test"
+test$train_set<-FALSE
 length(test)
 df<-rbind(train,test)
-
+summary(df)
 
 #Explore, clean, create variables
 df$sum_na<-apply(df,1,function(x) sum(is.na(x))) #adds count variable of NA
 
 #convert YOB to date
-library(lubridate)
+#library(lubridate)
 df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
 
-#create age variable
-df$age<-year(today())-df$YOB #'today()' is a lubrdiate function
+boxplot(df$YOB)
 
-boxplot(df$age)
-
-plot(df$age,df$sum_na)
-line<-(lm(df$sum_na~df$age))
+plot(df$YOB,df$sum_na,cex=.3)
+line<-(lm(df$sum_na~df$YOB))
 abline(line,col="purple",lwd=3)
-points(y=df$sum_na[df$Party=='Democrat'],x=df$age[df$Party=='Democrat'],col="blue")
-points(y=df$sum_na[df$Party=='Republican'],x=df$age[df$Party=='Republican'],col="red")
-points(y=df$sum_na[is.na(df$Party)],x=df$age[is.na(df$Party)],col="green")
-
-df[which(df$age>80),c('age',"Gender","Income","HouseholdStatus","EducationLevel","Party")]
+points(y=df$sum_na[df$Party=='Democrat'],x=df$YOB[df$Party=='Democrat'],col="blue")
+points(y=df$sum_na[df$Party=='Republican'],x=df$YOB[df$Party=='Republican'],col="red")
+points(y=df$sum_na[is.na(df$Party)],x=df$YOB[is.na(df$Party)],col="green")
 
 tail(sort(df$YOB),20)
 
 summary(df$YOB)
 plot(x=df$USER_ID,df$YOB,pch=19, col='blue',cex=.1)
 abline(h=2000,col='green')
-abline(h=1925,col='red')
+abline(h=1925,col='red')  #originally 1925
 points(x=df$USER_ID[df$YOB>='2003'],y=df$YOB[df$YOB>='2003'],col="black",cex=.3,pch=3)
 points(x=df$USER_ID[df$YOB<'1925'],y=df$YOB[df$YOB<'1925'],col="green",cex=.3,pch=3)
 points(x=df$USER_ID[is.na(df$YOB)==T],y=df$YOB[is.na(df$YOB)==T],col="orange",cex=.3,pch=3)
 
 for(i in 1:length(df$YOB)){
   if (!is.na(df$YOB[i])){
-    if(df$YOB[i] < 1925 | df$YOB[i]>2003) {
+    if(df$YOB[i] < 1938 | df$YOB[i]>2001) {  #originally 1925 and 2003, respectively; makes some gender issues of zero
       df$YOB[i]<-NA
       print(df$YOB[i])
     }
@@ -87,15 +82,36 @@ df$EducationLevel<-relevel(df$EducationLevel,ref="Current K-12")
 df$HouseholdStatus<-relevel(df$HouseholdStatus,ref="Single (no kids)")
 
 
+#install.packages("mice")
+#library(mice)
+
+#remove party from imputation
+dfParty<-df$Party
+dfUser_id<-df$USER_ID
+impute_df<-df[,c(-1,-108)]
+#at this point, df is still  whole, but needs 'age'
+imputed = complete(mice(impute_df))
+
+df$Party<-dfParty
+df$USER_ID<-dfUser_id
+imputed_df<-imputed
+imputed_df$USER_ID<-df$USER_ID
+imputed_df$Party<-df$Party
+#imputed_df$train_set<-factor(imputed_df$train_set, labels = c("test","train"))
 
 
+#create age variable
+imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
+write.csv(imputed_df, "./kaggle/imputed_df.csv")
 
+df<-imputed_df
 
 #return df back to test and train, split train set
 
-train<-df[which(df$data_set=='train'),]
-test<-df[which(df$data_set!='train'),]
+train<-df[which(df$train_set=='train'),]
+test<-df[which(df$train_set!='train'),]
 nrow(test)
+nrow(train)
 
 set.seed(144)
 spl = sample(1:nrow(train), size=0.7*nrow(train))
@@ -104,23 +120,10 @@ test_df = train[-spl,]
 
 
 
-
-
-#df<-df[complete.cases(df)==T,]  # read.csv na.strings = '' complete cases = 697
-
-install.packages("mice")
-library(mice)
-
-
-
-
-
-
-
-
+temp<-train_df[which(train_df$YOB != c('1928','1937','2003')),]
 # We will just create a simple logistic regression model, to predict Party using all other variables in the dataset, except for the user ID:
 
-SimpleMod = glm(Party ~ . -USER_ID -YOB, data=train_df, family=binomial)
+SimpleMod = glm(Party ~ . -USER_ID -train_set -YOB, data=temp, family=binomial)
 summary(SimpleMod)
 # And then make predictions on the test set:
 PredTrain = predict(SimpleMod,newdata=train, type="response")
