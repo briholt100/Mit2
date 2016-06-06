@@ -1,9 +1,17 @@
 ##Kaggle competition 2016, May
 #
 
+#preprocess
+#impute
+#logistic
+#cart
+#randomForrest
+
+
+
 # KAGGLE COMPETITION - GETTING STARTED
 #Load data
-school<-"I:/My Data Sources/mooc/MitAnalytic"
+school<-"I:/My Data Sources/mooc/Mit2"
 setwd(school)
 home<-getwd()
 setwd(paste0(home, "/mooc/MitAnal"))
@@ -101,7 +109,7 @@ imputed_df$Party<-df$Party
 #create age variable
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
-
+#imputed_df<-read.csv("./kaggle/Full_imputed.csv")
 df<-imputed_df
 
 #return df back to test and train, split train set
@@ -163,6 +171,30 @@ predCart1<-predict(simpleCartMod1,newdata=test,type='class')
 MySubmissionCart = data.frame(USER_ID = test$USER_ID, Predictions = predCart1)
 
 write.csv(MySubmissionCart, "./kaggle/SubmissionSimpleCart.csv", row.names=FALSE)
+
+
+
+
+# Random forest model
+library(randomForest)
+
+SimpleModRF = randomForest(Party ~ . -USER_ID -train_set -YOB, data=train_df,method='class')
+
+summary(SimpleModRF)
+# Make predictions:
+predictRF = predict(SimpleModRF, newdata=test_df)
+
+tbl<-table(test_df$Party, predictRF)
+tbl
+
+# Accuracy:
+(tbl[1]+tbl[4])/sum(tbl)
+
+predictRF = predict(SimpleModRF, newdata=test)
+
+MySubmissionForest<-data.frame(USER_ID = test$USER_ID, Predictions = predictRF)
+
+write.csv(MySubmissionForest, "./kaggle/SubmissionSimpleCForest.csv", row.names=FALSE)
 
 
 
