@@ -103,12 +103,12 @@ imputed = complete(mice(impute_df))
 df$Party<-dfParty
 df$USER_ID<-dfUser_id
 imputed_df<-imputed
-imputed_df$USER_ID<-df$USER_ID
-imputed_df$Party<-df$Party
 
 #create age variable
 library(lubridate)
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
+imputed_df$USER_ID<-df$USER_ID
+imputed_df$Party<-df$Party
 summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
 #imputed_df<-read.csv("./kaggle/Full_imputed.csv")
