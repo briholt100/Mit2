@@ -43,6 +43,18 @@ summary(df)
 #Explore, clean, create variables
 df$sum_na<-apply(df,1,function(x) sum(is.na(x))) #adds count variable of NA
 
+"""
+df$Income.int<-relevel(df$Income,ref="over $150,000")            150
+df$Income.int<-relevel(df$Income,ref="$100,001 - $150,000")      100
+df$Income<-relevel(df$Income,ref="$75,000 - $100,000")      75
+df$Income<-relevel(df$Income,ref="$50,000 - $74,999")      50
+df$Income<-relevel(df$Income,ref="$25,001 - $50,000")     25
+df$Income<-relevel(df$Income,ref="under $25,000")       0
+"""
+
+
+
+
 #convert YOB to date
 #library(lubridate)
 df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
@@ -154,6 +166,36 @@ write.csv(MySubmission, "./kaggle/SubmissionSimpleLog.csv", row.names=FALSE)
 # This model was just designed to help you get started - to do well in the competition, you will need to build better models!
 
 
+
+
+#step
+SimpleModStep <- step(SimpleMod)
+summary(SimpleModStep)
+
+PredTrain = predict(SimpleModStep,newdata=train_df, type="response")
+PredTest = predict(SimpleModStep, newdata=test, type="response")
+
+threshold = 0.5
+PredTrainLabels = as.factor(ifelse(PredTrain<threshold, "Democrat", "Republican"))
+PredTestLabels = as.factor(ifelse(PredTest<threshold, "Democrat", "Republican"))
+
+tbl<-table(train_df$Party,PredTrain>.50)
+tbl
+(tbl[1]+tbl[4])/sum(tbl)
+# However, you can submit the file on Kaggle to see how well the model performs. You can make up to 5 submissions per day, so don't hesitate to just upload a solution to see how you did.
+
+# Let's prepare a submission file for Kaggle (for more about this, see the "Evaluation" page on the competition site):
+
+MySubmission = data.frame(USER_ID = test$USER_ID, Predictions = PredTestLabels)
+
+write.csv(MySubmission, "./kaggle/SubmissionSimpleLogStep.csv", row.names=FALSE)
+
+
+
+
+
+
+
 #cart
 
 library(rpart)
@@ -219,3 +261,11 @@ MySubmissionFull_Imput <- data.frame(USER_ID = test$USER_ID, Predictions = temp$
 write.csv(MySubmissionFull_Imput, "./kaggle/MySubmissionFull_Imput.csv", row.names=FALSE)
 
 #this does not work well.
+
+
+library(ggplot2)
+
+p<-ggplot(data=train,aes(x="Q113181",y=age, fill=Party))
+p+geom_boxplot()
+
+
