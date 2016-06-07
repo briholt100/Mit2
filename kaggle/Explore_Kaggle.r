@@ -107,7 +107,9 @@ imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
 
 #create age variable
+library(lubridate)
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
+summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
 #imputed_df<-read.csv("./kaggle/Full_imputed.csv")
 df<-imputed_df
