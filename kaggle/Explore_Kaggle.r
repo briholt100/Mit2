@@ -123,7 +123,7 @@ imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
 summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
-#imputed_df<-read.csv("./kaggle/Full_imputed.csv")
+#imputed_df<-read.csv("./kaggle/imputed_df.csv")
 df<-imputed_df
 
 #return df back to test and train, split train set
