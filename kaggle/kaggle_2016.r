@@ -162,37 +162,49 @@ test_df = train[-spl,]
 #Below is the beginning of clustering
 #
 
-df.matrix<-data.matrix(df)
-
-train.df.matrix<-df.matrix[which(df.matrix[,107]==1),]
+df.train.matrix<-data.matrix(train_df)
+df.test.matrix<-data.matrix(test_df)
+test.matrix<-data.matrix(test)
+"""train.df.matrix<-df.matrix[which(df.matrix[,107]==1),]
 test.df.matrix<-df.matrix[which(df.matrix[,107]!=1),]
 ncol(train.df.matrix)
 ncol(test.df.matrix)
 dim(test.df.matrix)
-
+"""
 # Compute distances
-distance = dist(train.df.matrix, method = "euclidean")
+distance = dist(df.train.matrix[,-c(107,109)], method = "euclidean")
 heatmap(train.df.matrix[,-c(107,109:110)])
 plot(rowMeans(train.df.matrix),,xlab="Row",ylab="Row Mean",pch=19)
 plot(colMeans(train.df.matrix),xlab="Column",ylab="Column Mean",pch=19)
 
 # Hierarchical clustering
-distanceTrain = dist(train.df.matrix[,-c(107,109:110)], method = "euclidean")
-distanceTest = dist(test.df.matrix[,-c(107,109:110)], method = "euclidean")
+distanceTrain = dist(df.train.matrix[,-c(107,109)], method = "euclidean")
+distanceTest = dist(df.test.matrix[,-c(107,109)], method = "euclidean")
+distanceTest_final = dist(test.matrix[,-c(107,109,110)], method = "euclidean")
 
 clusterIntensity = hclust(distanceTrain, method="ward.D")
 plot(clusterIntensity)
-k=17
+k=6
 rect.hclust(clusterIntensity, k , border = "blue")
 
 test.clusterIntensity = hclust(distanceTest, method="ward.D")
 plot(test.clusterIntensity)
 rect.hclust(test.clusterIntensity, k , border = "blue")
 
+#distanceTest_final
+test_final.clusterIntensity = hclust(distanceTest_final, method="ward.D")
+plot(test_final.clusterIntensity)
+rect.hclust(test_final.clusterIntensity, k , border = "blue")
+
+
 trainClusters = cutree(clusterIntensity, k)
 testClusters = cutree(test.clusterIntensity, k)
-train_df$trainClusters<-as.factor(testClusters)
+test_finalClusters = cutree(test_final.clusterIntensity, k)
+train_df$trainClusters<-as.factor(trainClusters)
 test_df$testClusters<-as.factor(testClusters)
+test$testClusters<-as.factor(test_finalClusters)
+
+
 
 hclust1.train_df<-subset(train_df,train_df$trainClusters==1)
 hclust2.train_df<-subset(train_df,train_df$trainClusters==2)
@@ -200,6 +212,7 @@ hclust3.train_df<-subset(train_df,train_df$trainClusters==3)
 hclust4.train_df<-subset(train_df,train_df$trainClusters==4)
 hclust5.train_df<-subset(train_df,train_df$trainClusters==5)
 hclust6.train_df<-subset(train_df,train_df$trainClusters==6)
+
 hclust7.train_df<-subset(train_df,train_df$trainClusters==7)
 hclust8.train_df<-subset(train_df,train_df$trainClusters==8)
 hclust9.train_df<-subset(train_df,train_df$trainClusters==9)
@@ -219,6 +232,7 @@ hclust3.test_df<-subset(test_df,test_df$testClusters==3)
 hclust4.test_df<-subset(test_df,test_df$testClusters==4)
 hclust5.test_df<-subset(test_df,test_df$testClusters==5)
 hclust6.test_df<-subset(test_df,test_df$testClusters==6)
+
 hclust7.test_df<-subset(test_df,test_df$testClusters==7)
 hclust8.test_df<-subset(test_df,test_df$testClusters==8)
 hclust9.test_df<-subset(test_df,test_df$testClusters==9)
@@ -230,6 +244,21 @@ hclust14.test_df<-subset(test_df,test_df$testClusters==14)
 hclust15.test_df<-subset(test_df,test_df$testClusters==15)
 hclust16.test_df<-subset(test_df,test_df$testClusters==16)
 hclust17.test_df<-subset(test_df,test_df$testClusters==17)
+
+
+#final_test
+hclust1.test<-subset(test,test$testClusters==1)
+hclust2.test<-subset(test,test$testClusters==2)
+hclust3.test<-subset(test,test$testClusters==3)
+hclust4.test<-subset(test,test$testClusters==4)
+hclust5.test<-subset(test,test$testClusters==5)
+hclust6.test<-subset(test,test$testClusters==6)
+
+
+
+
+
+
 
 hcluster.train_df.list<-list(hclust1.train_df,
                    hclust2.train_df,
@@ -269,45 +298,132 @@ for (i in 1:length(hcluster.train_df.list)){
 
 #populate each model
 
-hcluster.train.model.1<-rpart(Party ~ . -YOB , data=hclust1.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.2<-rpart(Party ~ . -YOB , data=hclust2.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.3<-rpart(Party ~ . -YOB , data=hclust3.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.4<-rpart(Party ~ . -YOB , data=hclust4.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.5<-rpart(Party ~ . -YOB , data=hclust5.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.6<-rpart(Party ~ . -YOB , data=hclust6.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.7<-rpart(Party ~ . -YOB , data=hclust7.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.8<-rpart(Party ~ . -YOB , data=hclust8.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.9<-rpart(Party ~ . -YOB , data=hclust9.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.10<-rpart(Party ~ . -YOB , data=hclust10.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.11<-rpart(Party ~ . -YOB , data=hclust11.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.12<-rpart(Party ~ . -YOB , data=hclust12.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.13<-rpart(Party ~ . -YOB , data=hclust13.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.14<-rpart(Party ~ . -YOB , data=hclust14.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.15<-rpart(Party ~ . -YOB , data=hclust15.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.16<-rpart(Party ~ . -YOB , data=hclust16.train[,c(-107,-109,-112)], method="class")
-hcluster.train.model.17<-rpart(Party ~ . -YOB , data=hclust17.train[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.1<-rpart(Party ~ . -YOB , data=hclust1.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.2<-rpart(Party ~ . -YOB , data=hclust2.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.3<-rpart(Party ~ . -YOB , data=hclust3.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.4<-rpart(Party ~ . -YOB , data=hclust4.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.5<-rpart(Party ~ . -YOB , data=hclust5.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.6<-rpart(Party ~ . -YOB , data=hclust6.train_df[,c(-107,-109,-112)], method="class")
+
+hcluster.train_df.model.7<-rpart(Party ~ . -YOB , data=hclust7.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.8<-rpart(Party ~ . -YOB , data=hclust8.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.9<-rpart(Party ~ . -YOB , data=hclust9.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.10<-rpart(Party ~ . -YOB , data=hclust10.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.11<-rpart(Party ~ . -YOB , data=hclust11.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.12<-rpart(Party ~ . -YOB , data=hclust12.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.13<-rpart(Party ~ . -YOB , data=hclust13.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.14<-rpart(Party ~ . -YOB , data=hclust14.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.15<-rpart(Party ~ . -YOB , data=hclust15.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.16<-rpart(Party ~ . -YOB , data=hclust16.train_df[,c(-107,-109,-112)], method="class")
+hcluster.train_df.model.17<-rpart(Party ~ . -YOB , data=hclust17.train_df[,c(-107,-109,-112)], method="class")
 
 
-predhClustCartTrain1<-predict(hcluster.train.model.1,newdata=hclust1.test,type='class')
-predhClustCartTrain2<-predict(hcluster.train.model.2,newdata=hclust2.test,type='class')
-predhClustCartTrain3<-predict(hcluster.train.model.3,newdata=hclust3.test,type='class')
-predhClustCartTrain4<-predict(hcluster.train.model.4,newdata=hclust4.test,type='class')
-predhClustCartTrain5<-predict(hcluster.train.model.5,newdata=hclust5.test,type='class')
-predhClustCartTrain6<-predict(hcluster.train.model.6,newdata=hclust6.test,type='class')
-predhClustCartTrain7<-predict(hcluster.train.model.7,newdata=hclust7.test,type='class')
-predhClustCartTrain8<-predict(hcluster.train.model.8,newdata=hclust8.test,type='class')
-predhClustCartTrain9<-predict(hcluster.train.model.9,newdata=hclust9.test,type='class')
-predhClustCartTrain10<-predict(hcluster.train.model.10,newdata=hclust10.test,type='class')
-predhClustCartTrain11<-predict(hcluster.train.model.11,newdata=hclust11.test,type='class')
-predhClustCartTrain12<-predict(hcluster.train.model.12,newdata=hclust12.test,type='class')
-predhClustCartTrain13<-predict(hcluster.train.model.13,newdata=hclust13.test,type='class')
-predhClustCartTrain14<-predict(hcluster.train.model.14,newdata=hclust14.test,type='class')
-predhClustCartTrain15<-predict(hcluster.train.model.15,newdata=hclust15.test,type='class')
-predhClustCartTrain16<-predict(hcluster.train.model.16,newdata=hclust16.test,type='class')
-predhClustCartTrain17<-predict(hcluster.train.model.17,newdata=hclust17.test,type='class')
+predhClustCartTrain1<-predict(hcluster.train_df.model.1,newdata=hclust1.test,type='class')
+predhClustCartTrain2<-predict(hcluster.train_df.model.2,newdata=hclust2.test,type='class')
+predhClustCartTrain3<-predict(hcluster.train_df.model.3,newdata=hclust3.test,type='class')
+predhClustCartTrain4<-predict(hcluster.train_df.model.4,newdata=hclust4.test,type='class')
+predhClustCartTrain5<-predict(hcluster.train_df.model.5,newdata=hclust5.test,type='class')
+predhClustCartTrain6<-predict(hcluster.train_df.model.6,newdata=hclust6.test,type='class')
+
+predhClustCartTrain7<-predict(hcluster.train_df.model.7,newdata=hclust7.test_df,type='class')
+predhClustCartTrain8<-predict(hcluster.train_df.model.8,newdata=hclust8.test_df,type='class')
+predhClustCartTrain9<-predict(hcluster.train_df.model.9,newdata=hclust9.test_df,type='class')
+predhClustCartTrain10<-predict(hcluster.train_df.model.10,newdata=hclust10.test_df,type='class')
+predhClustCartTrain11<-predict(hcluster.train_df.model.11,newdata=hclust11.test_df,type='class')
+predhClustCartTrain12<-predict(hcluster.train_df.model.12,newdata=hclust12.test_df,type='class')
+predhClustCartTrain13<-predict(hcluster.train_df.model.13,newdata=hclust13.test_df,type='class')
+predhClustCartTrain14<-predict(hcluster.train_df.model.14,newdata=hclust14.test_df,type='class')
+predhClustCartTrain15<-predict(hcluster.train_df.model.15,newdata=hclust15.test_df,type='class')
+predhClustCartTrain16<-predict(hcluster.train_df.model.16,newdata=hclust16.test_df,type='class')
+predhClustCartTrain17<-predict(hcluster.train_df.model.17,newdata=hclust17.test_df,type='class')
 
 
-all.predictions
+all.predictions<-c(predhClustCartTrain1,
+                   predhClustCartTrain2,
+                   predhClustCartTrain3,
+                   predhClustCartTrain4,
+                   predhClustCartTrain5,
+                   predhClustCartTrain6,
+
+                   predhClustCartTrain7,
+                   predhClustCartTrain8,
+                   predhClustCartTrain9,
+                   predhClustCartTrain10,
+                   predhClustCartTrain11,
+                   predhClustCartTrain12,
+                   predhClustCartTrain13,
+                   predhClustCartTrain14,
+                   predhClustCartTrain15,
+                   predhClustCartTrain16,
+                   predhClustCartTrain17)
+
+predhClustCartTest1<-predict(hcluster.train_df.model.1,newdata=hclust1.test,type='class')
+predhClustCartTest2<-predict(hcluster.train_df.model.2,newdata=hclust2.test,type='class')
+predhClustCartTest3<-predict(hcluster.train_df.model.3,newdata=hclust3.test,type='class')
+predhClustCartTest4<-predict(hcluster.train_df.model.4,newdata=hclust4.test,type='class')
+predhClustCartTest5<-predict(hcluster.train_df.model.5,newdata=hclust5.test,type='class')
+predhClustCartTest6<-predict(hcluster.train_df.model.6,newdata=hclust6.test,type='class')
+
+all.predictions<-c(predhClustCartTest1,
+                   predhClustCartTest2,
+                   predhClustCartTest3,
+                   predhClustCartTest4,
+                   predhClustCartTest5,
+                   predhClustCartTest6)
+
+
+
+
+
+#The follwing should have same length:
+length(all.predictions)
+nrow(test_df)
+test_df$Pred.Party<-NA
+test_df[testClusters==1,"Pred.Party"]<-predhClustCartTrain1
+test_df[testClusters==2,"Pred.Party"]<-predhClustCartTrain2
+test_df[testClusters==3,"Pred.Party"]<-predhClustCartTrain3
+test_df[testClusters==4,"Pred.Party"]<-predhClustCartTrain4
+test_df[testClusters==5,"Pred.Party"]<-predhClustCartTrain5
+test_df[testClusters==6,"Pred.Party"]<-predhClustCartTrain6
+
+test_df[testClusters==7,"Pred.Party"]<-predhClustCartTrain7
+test_df[testClusters==8,"Pred.Party"]<-predhClustCartTrain8
+test_df[testClusters==9,"Pred.Party"]<-predhClustCartTrain9
+test_df[testClusters==10,"Pred.Party"]<-predhClustCartTrain10
+test_df[testClusters==11,"Pred.Party"]<-predhClustCartTrain11
+test_df[testClusters==12,"Pred.Party"]<-predhClustCartTrain12
+test_df[testClusters==13,"Pred.Party"]<-predhClustCartTrain13
+test_df[testClusters==14,"Pred.Party"]<-predhClustCartTrain14
+test_df[testClusters==15,"Pred.Party"]<-predhClustCartTrain15
+test_df[testClusters==16,"Pred.Party"]<-predhClustCartTrain16
+test_df[testClusters==17,"Pred.Party"]<-predhClustCartTrain17
+
+
+tbl<-table(test_df$Party,test_df$Pred.Party)
+tbl
+(tbl[1]+tbl[4])/sum(tbl)
+
+
+#The follwing should have same length:
+length(all.predictions)
+nrow(test)
+test$Pred.Party<-NA
+test[test_finalClusters==1,"Pred.Party"]<-predhClustCartTest1
+test[test_finalClusters==2,"Pred.Party"]<-predhClustCartTest2
+test[test_finalClusters==3,"Pred.Party"]<-predhClustCartTest3
+test[test_finalClusters==4,"Pred.Party"]<-predhClustCartTest4
+test[test_finalClusters==5,"Pred.Party"]<-predhClustCartTest5
+test[test_finalClusters==6,"Pred.Party"]<-predhClustCartTest6
+
+test$Pred.Party[test$Pred.Party == 2]<-"Republican"
+test$Pred.Party[test$Pred.Party == 1]<-"Democrat"
+
+MySubmissionClusterCart = data.frame(USER_ID = test$USER_ID, Predictions = test$Pred.Party)
+
+write.csv(MySubmissionClusterCart, "./kaggle/SubmissionSimpleCart.csv", row.names=FALSE)
+
+
+
 
 
 hClustCartMod1<-rpart(Party ~ . -USER_ID -train_set -YOB, data=hclust1.train, method="class")
