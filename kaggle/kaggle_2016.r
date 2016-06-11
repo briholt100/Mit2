@@ -420,7 +420,7 @@ test$Pred.Party[test$Pred.Party == 1]<-"Democrat"
 
 MySubmissionClusterCart = data.frame(USER_ID = test$USER_ID, Predictions = test$Pred.Party)
 
-write.csv(MySubmissionClusterCart, "./kaggle/SubmissionSimpleCart.csv", row.names=FALSE)
+write.csv(MySubmissionClusterCart, "./kaggle/SubmissionSimpleClusterCart.csv", row.names=FALSE)
 
 
 
