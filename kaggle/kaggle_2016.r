@@ -1,7 +1,8 @@
-#library(lubridate)
-#library(ggplot2)
-#library(mice)
-#library(caret)
+library(lubridate)
+library(ggplot2)
+library(mice)
+library(caret)
+library(Hmisc)
 #Load data
 school<-"I:/My Data Sources/mooc/Mit2"
 setwd(school)
@@ -141,7 +142,30 @@ table(is.na(df$YOB))
 
 #imputed_df<-read.csv("./kaggle/imputed_df.csv")
 df<-imputed_df[,-1]
+df_matrix<-data.matrix(df)
 
+correlations <- rcorr(df_matrix[,-1])
+objects(correlations)
+correlations$P
+library(corrgram)
+corrgram(df_matrix[,2:30])
+
+
+temp1<-cor(df_matrix[,-1],df_matrix[,2:25])
+temp2<-cor(df_matrix[,-1],df_matrix[,26:56])
+temp3<-cor(df_matrix[,-1],df_matrix[,57:85])
+temp4<-cor(df_matrix[,-1],df_matrix[,86:111])
+corrgram(temp1)
+corrgram(temp2)
+corrgram(temp3)
+corrgram(temp4)
+
+apply(t,2,function(x){y<-which(x>.5 & x < .99)
+                      if(is.na(y)==F){
+                        print(y)
+                      }
+                      }
+      )
 #return df back to test and train, split train set
 
 train<-df[which(df$train_set==T),]
