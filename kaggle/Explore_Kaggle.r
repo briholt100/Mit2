@@ -239,7 +239,7 @@ df<-df[,-57]
 #remove party from imputation
 dfParty<-df$Party
 dfUser_id<-df$USER_ID
-impute_df<-df[,c(-1,-107,-108,-110)]
+impute_df<-df[,c(-1,-2,-107,-108,-110)]
 #at this point, df is still  whole, but needs 'age'
 imputed = complete(mice(impute_df))
 
@@ -252,7 +252,7 @@ imputed_df<-imputed
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
 imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
-summary(imputed_df)
+#summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
 
 df<-imputed_df
