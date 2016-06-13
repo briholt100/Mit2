@@ -1,9 +1,9 @@
 #imputed_df<-read.csv("./kaggle/imputed_df.csv")
 #return df back to test and train, split train set
+nrow(df_complete)
 
-
-train<-df[which(df$train_set==T),]
-test<-df[which(df$train_set==F),]
+train<-df_complete[which(df_complete$train_set==T),]
+#test<-df_complete[which(df_complete$train_set==F),]
 nrow(test)
 nrow(train)
 
@@ -13,10 +13,7 @@ train_df = train[spl,]
 test_df = train[-spl,]
 
 
-
-
-
-# We will just create a simple logistic regression model, to predict Party using all other variables in the dataset, except for the user ID:
+# Simple logistic regression model
 
 SimpleMod = glm(Party ~ . -USER_ID -train_set -YOB, data=train_df, family=binomial)
 summary(SimpleMod)

@@ -26,7 +26,7 @@ dir()
 kaggle_train <- read.csv("./kaggle/train2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
 kaggle_test <- read.csv("./kaggle/test2016.csv",stringsAsFactors=T,na.strings = c("NA", '',' '))
 
-#join test and train
+#join test and train into one data frame, moving "party" to end, and NA's for test data, keeping test and train noted/
 train<-kaggle_train
 test<-kaggle_test
 test$Party<-NA
@@ -57,7 +57,6 @@ df$Income<-relevel(df$Income,ref="under $25,000")       0
 
 
 #convert YOB to date
-#library(lubridate)
 df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
 
 boxplot(df$YOB)
@@ -101,8 +100,6 @@ df$Income<-relevel(df$Income,ref="under $25,000")
 levels(df$EducationLevel)
 df$EducationLevel<-relevel(df$EducationLevel,ref="Current K-12")
 df$HouseholdStatus<-relevel(df$HouseholdStatus,ref="Single (no kids)")
-
-
 
 #convert YOB to date
 
@@ -178,6 +175,88 @@ median(df$YOB[df$EducationLevel == "Current K-12"],na.rm=T)
 df[9,'YOB']<-1997
 table(is.na(df$YOB))
 
+
+
+#############################################
+#############################################
+#       Before Imputing
+#       Correlations
+#
+#############################################
+#############################################
+
+df_complete<-df[complete.cases(df),]  # creates a small df of complete cases
+
+df_matrix_complete<-data.matrix(df_complete)
+summary(df_matrix_complete)
+correlations <- rcorr(df_matrix_complete[,-1])
+objects(correlations)
+correlations$P
+which(abs(correlations$P)<.001,arr.ind=T)
+attr(correlations$P,which='dimnames')[[2]][11]
+
+library(corrgram)
+corrgram(df_matrix_complete[,-1])
+
+
+temp1<-cor(df_matrix_complete[,-1],df_matrix_complete[,-1])
+corrgram(temp1)
+
+cor.df<-as.data.frame(cbind(which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=T),
+                            temp1[which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=F)]),row.names=T)
+
+cor.df$rowName<-rownames(which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=T))
+cor.df$colName<-colnames(temp1)[cor.df$col]
+colnames(cor.df)<-c('temp1.row.pos','temp1.col.pos','r','rowName','colName')
+
+cor.df$r<-as.numeric(as.character(cor.df$r))
+head(cor.df[order(abs(cor.df$r),decreasing=T),],20)
+duplicated(cor.df$r)
+
+#Q98197  Q113181 are the same question.  These answers should be merged and one dropped.
+#Q102674  Q108343 have strong correlations but are different questions
+
+#reload and combine orgiinal data into df, performed at top of script
+unmatched<-which(df$Q98197 != df$Q113181)
+df[unmatched,c('Q98197',"Q113181")]
+df[unmatched,c('Q113181')]<-df[unmatched,c('Q98197')]
+df[,c(-'Q113181')]
+grep('Q113181',colnames(df),ignore.case=T)
+df<-df[,-57]
+
+
+#############################################
+#############################################
+#       Imputing
+#
+#############################################
+#############################################
+
+
+#install.packages("mice")
+#library(mice)
+
+#remove party from imputation
+dfParty<-df$Party
+dfUser_id<-df$USER_ID
+impute_df<-df[,c(-1,-107,-108,-110)]
+#at this point, df is still  whole, but needs 'age'
+imputed = complete(mice(impute_df))
+
+df$Party<-dfParty
+df$USER_ID<-dfUser_id
+imputed_df<-imputed
+
+#create age variable
+#library(lubridate)
+imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
+imputed_df$USER_ID<-df$USER_ID
+imputed_df$Party<-df$Party
+summary(imputed_df)
+write.csv(imputed_df, "./kaggle/imputed_df.csv")
+
+df<-imputed_df
+
 #############################################
 #############################################
 #       After Imputing
@@ -225,37 +304,6 @@ duplicated(cor.df$r)
 df<-imputed_df[,-1]
 
 
-#############################################
-#############################################
-#       Imputing
-#
-#############################################
-#############################################
-
-
-#install.packages("mice")
-#library(mice)
-
-#remove party from imputation
-dfParty<-df$Party
-dfUser_id<-df$USER_ID
-impute_df<-df[,c(-1,-108)]
-#at this point, df is still  whole, but needs 'age'
-imputed = complete(mice(impute_df))
-
-df$Party<-dfParty
-df$USER_ID<-dfUser_id
-imputed_df<-imputed
-
-#create age variable
-library(lubridate)
-imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
-imputed_df$USER_ID<-df$USER_ID
-imputed_df$Party<-df$Party
-summary(imputed_df)
-write.csv(imputed_df, "./kaggle/imputed_df.csv")
-
-df<-imputed_df
 
 #return df back to test and train, split train set
 
