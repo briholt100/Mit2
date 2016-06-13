@@ -184,7 +184,7 @@ table(is.na(df$YOB))
 #
 #############################################
 #############################################
-
+library(corrgram)
 df_complete<-df[complete.cases(df),]  # creates a small df of complete cases
 
 df_matrix_complete<-data.matrix(df_complete)
@@ -195,7 +195,7 @@ correlations$P
 which(abs(correlations$P)<.001,arr.ind=T)
 attr(correlations$P,which='dimnames')[[2]][11]
 
-library(corrgram)
+
 corrgram(df_matrix_complete[,-1])
 
 
