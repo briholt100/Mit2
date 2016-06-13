@@ -40,6 +40,7 @@ length(test)
 df<-rbind(train,test)
 summary(df)
 
+#expore
 #Explore, clean, create variables
 df$sum_na<-apply(df,1,function(x) sum(is.na(x))) #adds count variable of NA
 
@@ -102,6 +103,136 @@ df$EducationLevel<-relevel(df$EducationLevel,ref="Current K-12")
 df$HouseholdStatus<-relevel(df$HouseholdStatus,ref="Single (no kids)")
 
 
+
+#convert YOB to date
+
+df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
+df$age<-year(today())-df$YOB #'today()' is a lubrdiate function
+p<-ggplot(data=df,aes(x=YOB))
+p+geom_bar(aes(fill=Party))+geom_vline(xintercept=2010)
+#so, there are outliers and impossible birthdates.
+
+#the folliwing are cases with odd birth years:
+odd_dates<-df[which(df$YOB>2000 | df$YOB< 1925),]
+plot(x=odd_dates$age,y=odd_dates$YOB,las=2,na.rm=F,cex=.1)
+points(odd_dates$age,y=odd_dates$YOB,col=odd_dates$Party,cex=.5)
+
+# loop converts to na YOB outside realistic birth years
+for(i in 1:length(df$YOB)){
+  if (!is.na(df$YOB[i])){
+    if(df$YOB[i] < 1925 | df$YOB[i]>2003) {  #originally 1925 and 2003, respectively; makes some gender issues of zero
+      df$YOB[i]<-NA
+      print(df$YOB[i])
+    }
+  }
+}
+
+tapply(df$YOB,list(df$EducationLevel,df$Income),mean, na.rm=T)  #mean yob by income and education
+tapply(df$YOB,list(df$EducationLevel,df$Income),function(x) sum(is.na(x))) #count of YOB na by income, education
+median_yob_tbl<-tapply(df$YOB,list(df$EducationLevel,df$Income),median, na.rm=T)#median yob by income and education
+
+# What follows takes median_yob_tbl above and uses row and colnames to find NA in YOB
+df[which(df$EducationLevel == rownames(median_yob_tbl)[6] & df$Income == colnames(median_yob_tbl)[1]  & is.na(df$YOB)==T),]
+#Income has 6 levels
+#EducationLevel has 7 levels.
+#for (j in 1:length(colnames(median_yob_tbl))){
+#  for (i in 1:length(rownames(median_yob_tbl))){
+#    print(rownames(median_yob_tbl)[i]);  print(colnames(median_yob_tbl)[j])
+#    }
+#}
+
+for(i in which(is.na(df$YOB)==T)){yob_na<-which(is.na(df$YOB)==T)}  #creates list of records with YOB ==NA
+
+# The following goes and replaces df$YOB with NA's the median year of birth, but only for full records in income and education
+count<-0
+for(i in 1:nrow(df[yob_na,])){
+  for (j in 1:length(colnames(median_yob_tbl))){
+    for (k in 1:length(rownames(median_yob_tbl))){
+      if(!is.na(as.logical(colnames(median_yob_tbl)[j] == df$Income[i] &
+                             rownames(median_yob_tbl)[k]==df$EducationLevel[i]))){
+        df$YOB[yob_na][i]<-(median_yob_tbl[k,j])}
+    }
+  }
+  count<-count+1
+}
+print (count)
+
+table(is.na(df$YOB))
+df[is.na(df$YOB),1:6]
+
+for(i in which(is.na(df$YOB)==T)){yob_na<-which(is.na(df$YOB)==T)}  #creates list of records with YOB ==NA
+
+#The following replaces NA with Median of EducationLEvel
+count<-0
+for(i in 1:nrow(df[yob_na,])){
+  for (j in 1:length(rownames(median_yob_tbl))){
+    if(!is.na(as.logical(rownames(median_yob_tbl)[j]==df$EducationLevel[i]))){
+      df$YOB[yob_na][i]<-apply(median_yob_tbl,1,median)[j]}
+  }
+  count<-count+1
+}
+print (count)
+
+#for some reason record 9 won't update.  They are in K-12, which has a median 1997
+median(df$YOB[df$EducationLevel == "Current K-12"],na.rm=T)
+df[9,'YOB']<-1997
+table(is.na(df$YOB))
+
+#############################################
+#############################################
+#       After Imputing
+#       Correlations
+#
+#############################################
+#############################################
+
+
+df_matrix<-data.matrix(df)
+
+correlations <- rcorr(df_matrix[,-1])
+objects(correlations)
+correlations$P
+which(abs(correlations$P)<.001,arr.ind=T)
+attr(correlations$P,which='dimnames')[[2]][11]
+
+library(corrgram)
+corrgram(df_matrix[,2:20])
+
+
+temp1<-cor(df_matrix[,-1],df_matrix[,-1])
+corrgram(temp1)
+
+cor.df<-as.data.frame(cbind(which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=T),
+                            temp1[which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=F)]),row.names=T)
+
+cor.df$rowName<-rownames(which(abs(temp1)>.2 & abs(temp1)<.99,arr.ind=T))
+cor.df$colName<-colnames(temp1)[cor.df$col]
+colnames(cor.df)<-c('temp1.row.pos','temp1.col.pos','r','rowName','colName')
+
+cor.df$r<-as.numeric(as.character(cor.df$r))
+head(cor.df[order(abs(cor.df$r),decreasing=T),],10)
+duplicated(cor.df$r)
+
+
+#############################################
+#############################################
+#       After imputing
+#
+#############################################
+#############################################
+
+#imputed_df<-read.csv("./kaggle/imputed_df.csv")
+df<-imputed_df[,-1]
+
+
+#############################################
+#############################################
+#       Imputing
+#
+#############################################
+#############################################
+
+
 #install.packages("mice")
 #library(mice)
 
@@ -123,7 +254,7 @@ imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
 summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
-#imputed_df<-read.csv("./kaggle/Full_imputed.csv")
+
 df<-imputed_df
 
 #return df back to test and train, split train set
@@ -137,135 +268,3 @@ set.seed(144)
 spl = sample(1:nrow(train), size=0.7*nrow(train))
 train_df = train[spl,]
 test_df = train[-spl,]
-
-# We will just create a simple logistic regression model, to predict Party using all other variables in the dataset, except for the user ID:
-
-SimpleMod = glm(Party ~ . -USER_ID -train_set -YOB, data=train_df, family=binomial)
-summary(SimpleMod)
-# And then make predictions on the test set:
-PredTrain = predict(SimpleMod,newdata=train_df, type="response")
-PredTest = predict(SimpleMod, newdata=test, type="response")
-
-threshold = 0.5
-PredTrainLabels = as.factor(ifelse(PredTrain<threshold, "Democrat", "Republican"))
-PredTestLabels = as.factor(ifelse(PredTest<threshold, "Democrat", "Republican"))
-
-tbl<-table(train_df$Party,PredTrain>.50)
-tbl
-(tbl[1]+tbl[4])/sum(tbl)
-# However, you can submit the file on Kaggle to see how well the model performs. You can make up to 5 submissions per day, so don't hesitate to just upload a solution to see how you did.
-
-# Let's prepare a submission file for Kaggle (for more about this, see the "Evaluation" page on the competition site):
-
-MySubmission = data.frame(USER_ID = test$USER_ID, Predictions = PredTestLabels)
-
-write.csv(MySubmission, "./kaggle/SubmissionSimpleLog.csv", row.names=FALSE)
-
-# You should upload the submission "SubmissionSimpleLog.csv" on the Kaggle website to use this as a submission to the competition
-
-# This model was just designed to help you get started - to do well in the competition, you will need to build better models!
-
-
-
-
-#step
-SimpleModStep <- step(SimpleMod)
-summary(SimpleModStep)
-
-PredTrain = predict(SimpleModStep,newdata=train_df, type="response")
-PredTest = predict(SimpleModStep, newdata=test, type="response")
-
-threshold = 0.5
-PredTrainLabels = as.factor(ifelse(PredTrain<threshold, "Democrat", "Republican"))
-PredTestLabels = as.factor(ifelse(PredTest<threshold, "Democrat", "Republican"))
-
-tbl<-table(train_df$Party,PredTrain>.50)
-tbl
-(tbl[1]+tbl[4])/sum(tbl)
-# However, you can submit the file on Kaggle to see how well the model performs. You can make up to 5 submissions per day, so don't hesitate to just upload a solution to see how you did.
-
-# Let's prepare a submission file for Kaggle (for more about this, see the "Evaluation" page on the competition site):
-
-MySubmission = data.frame(USER_ID = test$USER_ID, Predictions = PredTestLabels)
-
-write.csv(MySubmission, "./kaggle/SubmissionSimpleLogStep.csv", row.names=FALSE)
-
-
-
-
-
-
-
-#cart
-
-library(rpart)
-library(rpart.plot)
-
-simpleCartMod1<-rpart(Party ~ . -USER_ID -train_set -YOB, data=train_df, method="class")
-prp(simpleCartMod1)
-
-predCartTrain1<-predict(simpleCartMod1,newdata=test_df,type='class')
-tbl<-table(test_df$Party,predCartTrain1)
-tbl
-(tbl[1]+tbl[4])/sum(tbl)
-
-
-predCart1<-predict(simpleCartMod1,newdata=test,type='class')
-
-MySubmissionCart = data.frame(USER_ID = test$USER_ID, Predictions = predCart1)
-
-write.csv(MySubmissionCart, "./kaggle/SubmissionSimpleCart.csv", row.names=FALSE)
-
-
-
-
-# Random forest model
-library(randomForest)
-
-SimpleModRF = randomForest(Party ~ . -USER_ID -train_set -YOB, data=train_df,method='class')
-
-summary(SimpleModRF)
-# Make predictions:
-predictRF = predict(SimpleModRF, newdata=test_df)
-
-tbl<-table(test_df$Party, predictRF)
-tbl
-
-# Accuracy:
-(tbl[1]+tbl[4])/sum(tbl)
-
-predictRF = predict(SimpleModRF, newdata=test)
-
-MySubmissionForest<-data.frame(USER_ID = test$USER_ID, Predictions = predictRF)
-
-write.csv(MySubmissionForest, "./kaggle/SubmissionSimpleCForest.csv", row.names=FALSE)
-
-
-
-
-# Multiple imputation for all variables, including test set, with no preprocessing other than adding 'age' and sum_na.
-#set.seed(144)
-
-
-summary(df)
-imputed = complete(mice(df[,2:110]))
-summary(imputed)
-imputed$USER_ID <-df$USER_ID
-summary(imputed)
-write.csv(imputed, "./kaggle/Full_imputed.csv", row.names=FALSE)
-
-temp<-merge(test,imputed,by.x="USER_ID",by.y="USER_ID",all.x=T)
-
-MySubmissionFull_Imput <- data.frame(USER_ID = test$USER_ID, Predictions = temp$Party.y)
-
-write.csv(MySubmissionFull_Imput, "./kaggle/MySubmissionFull_Imput.csv", row.names=FALSE)
-
-#this does not work well.
-
-
-library(ggplot2)
-
-p<-ggplot(data=train,aes(x="Q113181",y=age, fill=Party))
-p+geom_boxplot()
-
-

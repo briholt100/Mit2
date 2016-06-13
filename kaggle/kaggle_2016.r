@@ -65,108 +65,10 @@ High School Diploma
  Master's Degree
 """
 
-#convert YOB to date
-
-df$YOB<-year(as.POSIXct(paste(df$YOB,"-01","-01",sep=""),format='%Y'))
-df$age<-year(today())-df$YOB #'today()' is a lubrdiate function
-p<-ggplot(data=df,aes(x=YOB))
-p+geom_bar(aes(fill=Party))+geom_vline(xintercept=2010)
-#so, there are outliers and impossible birthdates.
-
-#the folliwing are cases with odd birth years:
-odd_dates<-df[which(df$YOB>2000 | df$YOB< 1925),]
-plot(x=odd_dates$age,y=odd_dates$YOB,las=2,na.rm=F,cex=.1)
-points(odd_dates$age,y=odd_dates$YOB,col=odd_dates$Party,cex=.5)
-
-# loop converts to na YOB outside realistic birth years
-for(i in 1:length(df$YOB)){
-  if (!is.na(df$YOB[i])){
-    if(df$YOB[i] < 1925 | df$YOB[i]>2003) {  #originally 1925 and 2003, respectively; makes some gender issues of zero
-      df$YOB[i]<-NA
-      print(df$YOB[i])
-    }
-  }
-}
-
-tapply(df$YOB,list(df$EducationLevel,df$Income),mean, na.rm=T)  #mean yob by income and education
-tapply(df$YOB,list(df$EducationLevel,df$Income),function(x) sum(is.na(x))) #count of YOB na by income, education
-median_yob_tbl<-tapply(df$YOB,list(df$EducationLevel,df$Income),median, na.rm=T)#median yob by income and education
-
-# What follows takes median_yob_tbl above and uses row and colnames to find NA in YOB
-df[which(df$EducationLevel == rownames(median_yob_tbl)[6] & df$Income == colnames(median_yob_tbl)[1]  & is.na(df$YOB)==T),]
-#Income has 6 levels
-#EducationLevel has 7 levels.
-#for (j in 1:length(colnames(median_yob_tbl))){
-#  for (i in 1:length(rownames(median_yob_tbl))){
-#    print(rownames(median_yob_tbl)[i]);  print(colnames(median_yob_tbl)[j])
-#    }
-#}
-
-for(i in which(is.na(df$YOB)==T)){yob_na<-which(is.na(df$YOB)==T)}  #creates list of records with YOB ==NA
-
-# The following goes and replaces df$YOB with NA's the median year of birth, but only for full records in income and education
-count<-0
-for(i in 1:nrow(df[yob_na,])){
-  for (j in 1:length(colnames(median_yob_tbl))){
-    for (k in 1:length(rownames(median_yob_tbl))){
-    if(!is.na(as.logical(colnames(median_yob_tbl)[j] == df$Income[i] &
-                        rownames(median_yob_tbl)[k]==df$EducationLevel[i]))){
-           df$YOB[yob_na][i]<-(median_yob_tbl[k,j])}
-  }
-  }
-  count<-count+1
-}
-print (count)
-
-table(is.na(df$YOB))
-df[is.na(df$YOB),1:6]
-
-for(i in which(is.na(df$YOB)==T)){yob_na<-which(is.na(df$YOB)==T)}  #creates list of records with YOB ==NA
-
-#The following replaces NA with Median of EducationLEvel
-count<-0
-for(i in 1:nrow(df[yob_na,])){
-  for (j in 1:length(rownames(median_yob_tbl))){
-      if(!is.na(as.logical(rownames(median_yob_tbl)[j]==df$EducationLevel[i]))){
-        df$YOB[yob_na][i]<-apply(median_yob_tbl,1,median)[j]}
-    }
-   count<-count+1
-}
-print (count)
-
-#for some reason record 9 won't update.  They are in K-12, which has a median 1997
-median(df$YOB[df$EducationLevel == "Current K-12"],na.rm=T)
-df[9,'YOB']<-1997
-table(is.na(df$YOB))
-
 
 #imputed_df<-read.csv("./kaggle/imputed_df.csv")
-df<-imputed_df[,-1]
-df_matrix<-data.matrix(df)
-
-correlations <- rcorr(df_matrix[,-1])
-objects(correlations)
-correlations$P
-library(corrgram)
-corrgram(df_matrix[,2:30])
-
-
-temp1<-cor(df_matrix[,-1],df_matrix[,2:25])
-temp2<-cor(df_matrix[,-1],df_matrix[,26:56])
-temp3<-cor(df_matrix[,-1],df_matrix[,57:85])
-temp4<-cor(df_matrix[,-1],df_matrix[,86:111])
-corrgram(temp1)
-corrgram(temp2)
-corrgram(temp3)
-corrgram(temp4)
-
-apply(t,2,function(x){y<-which(x>.5 & x < .99)
-                      if(is.na(y)==F){
-                        print(y)
-                      }
-                      }
-      )
 #return df back to test and train, split train set
+
 
 train<-df[which(df$train_set==T),]
 test<-df[which(df$train_set==F),]
