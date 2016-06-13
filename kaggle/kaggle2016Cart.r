@@ -22,7 +22,11 @@ test_df = train[-spl,]
 library(rpart)
 library(rpart.plot)
 
-simpleCartMod1<-rpart(Party ~ . -USER_ID -train_set -YOB, data=train_df, method="class")
+simpleCartMod1<-rpart(Party ~ Q124742 + Q119851 + Q118232 + Q118233 + 
+                        Q116881 +  Q116953 + Q116601 + Q115611+
+                        Q109244 + Q106272 + Q104996 + Q101163 +
+                        Q98197 + Income +
+                        HouseholdStatus + EducationLevel + age, data=train_df, method="class")
 prp(simpleCartMod1)
 
 predCartTrain1<-predict(simpleCartMod1,newdata=test_df,type='class')

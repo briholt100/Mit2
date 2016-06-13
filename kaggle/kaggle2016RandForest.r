@@ -20,7 +20,7 @@ test_df = train[-spl,]
 # Random forest model
 library(randomForest)
 
-SimpleModRF = randomForest(Party ~ . -USER_ID -train_set -YOB, data=train_df,method='class')
+SimpleModRF = randomForest(Party ~ . -USER_ID -train_set, data=train_df,method='class')
 
 summary(SimpleModRF)
 # Make predictions:

@@ -38,12 +38,12 @@ test$Party<-NA
 test$train_set<-FALSE
 length(test)
 df<-rbind(train,test)
-summary(df)
+
 
 #expore
 #Explore, clean, create variables
 df$sum_na<-apply(df,1,function(x) sum(is.na(x))) #adds count variable of NA
-
+summary(df)
 """
 df$Income.int<-relevel(df$Income,ref="over $150,000")            150
 df$Income.int<-relevel(df$Income,ref="$100,001 - $150,000")      100
@@ -220,7 +220,6 @@ duplicated(cor.df$r)
 unmatched<-which(df$Q98197 != df$Q113181)
 df[unmatched,c('Q98197',"Q113181")]
 df[unmatched,c('Q113181')]<-df[unmatched,c('Q98197')]
-df[,c(-'Q113181')]
 grep('Q113181',colnames(df),ignore.case=T)
 df<-df[,-57]
 
@@ -239,12 +238,11 @@ df<-df[,-57]
 #remove party from imputation
 dfParty<-df$Party
 dfUser_id<-df$USER_ID
-impute_df<-df[,c(-1,-2,-107,-108,-110)]
+dftrain_set<-df$train_set
+impute_df<-df[,c(-1,-107,-108,-110)]
 #at this point, df is still  whole, but needs 'age'
 imputed = complete(mice(impute_df))
 
-df$Party<-dfParty
-df$USER_ID<-dfUser_id
 imputed_df<-imputed
 
 #create age variable
@@ -252,10 +250,12 @@ imputed_df<-imputed
 imputed_df$age<-year(today())-imputed_df$YOB #'today()' is a lubrdiate function
 imputed_df$USER_ID<-df$USER_ID
 imputed_df$Party<-df$Party
+imputed_df$train_set<-df$train_set
 #summary(imputed_df)
 write.csv(imputed_df, "./kaggle/imputed_df.csv")
 
 df<-imputed_df
+df$age
 
 #############################################
 #############################################
@@ -269,9 +269,8 @@ df<-imputed_df
 df_matrix<-data.matrix(df)
 
 correlations <- rcorr(df_matrix[,-1])
-objects(correlations)
 correlations$P
-which(abs(correlations$P)<.001,arr.ind=T)
+which(abs(correlations$P)<.0001,arr.ind=T)
 attr(correlations$P,which='dimnames')[[2]][11]
 
 library(corrgram)

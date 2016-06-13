@@ -16,7 +16,14 @@ test_df = train[-spl,]
 
 
 #step
-SimpleModStep <- step(SimpleMod)
+SimpleMod1 = glm(Party ~ Q124742 + Q119851 + Q118232 + Q118233 + 
+                   Q116881 +  Q116953 + Q116601 + Q115611+
+                   Q109244 + Q106272 + Q104996 + Q101163 +
+                   Q98197 + Income +
+                   HouseholdStatus + EducationLevel + age, data=train_df, family=binomial)
+summary(SimpleMod1)
+
+SimpleModStep <- step(SimpleMod1)
 summary(SimpleModStep)
 
 PredTrain = predict(SimpleModStep,newdata=train_df, type="response")
